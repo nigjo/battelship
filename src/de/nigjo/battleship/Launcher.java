@@ -15,6 +15,8 @@
  */
 package de.nigjo.battleship;
 
+import java.nio.file.Path;
+
 import java.awt.BorderLayout;
 
 import javax.swing.JFrame;
@@ -39,7 +41,7 @@ public class Launcher
    */
   public static void main(String[] args)
   {
-    BattleshipGame game = new BattleshipGame();
+    BattleshipGame game = new BattleshipGame(Path.of("battleship.player.id"));
     game.initRandom();
     Storage.getDefault().put(BattleshipGame.class.getName(), game);
 

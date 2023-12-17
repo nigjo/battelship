@@ -15,9 +15,11 @@
  */
 package de.nigjo.battleship;
 
+import java.nio.file.Path;
 import java.util.Random;
 
 import de.nigjo.battleship.data.BoardData;
+import de.nigjo.battleship.data.KeyManager;
 import de.nigjo.battleship.util.Storage;
 
 /**
@@ -28,9 +30,15 @@ public class BattleshipGame
 {
   private final Storage gamedata;
 
-  public BattleshipGame()
+  public BattleshipGame(Path playerId)
   {
     this.gamedata = new Storage();
+    this.gamedata.put(BoardData.KEY_SELF, new BoardData(10));
+    BoardData op = new BoardData(10);
+    op.setOpponent(true);
+    this.gamedata.put(BoardData.KEY_OPPONENT, op);
+
+    gamedata.put("keymanager.self", new KeyManager(playerId));
   }
 
   public Storage getGamedata()
@@ -48,8 +56,7 @@ public class BattleshipGame
     Random rnd = new Random(seed);
     BoardData own = BoardData.generateRandom(10, rnd, BoardData.GAME_SIMPLE);
     gamedata.put(BoardData.KEY_SELF, own);
-
-    BoardData opponent = BoardData.generateRandom(10, rnd, BoardData.GAME_SIMPLE);
+    BoardData opponent = new BoardData(10);
     opponent.setOpponent(true);
     gamedata.put(BoardData.KEY_OPPONENT, opponent);
   }
