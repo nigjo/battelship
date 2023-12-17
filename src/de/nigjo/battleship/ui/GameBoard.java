@@ -27,6 +27,7 @@ import javax.swing.JPanel;
 import javax.swing.JToolBar;
 
 import de.nigjo.battleship.data.BoardData;
+import de.nigjo.battleship.util.Storage;
 
 /**
  *
@@ -34,7 +35,7 @@ import de.nigjo.battleship.data.BoardData;
  */
 public class GameBoard extends JPanel
 {
-  public GameBoard(BoardData left, BoardData right)
+  public GameBoard(Storage gamedata)
   {
     super(new BorderLayout());
     setBackground(Color.ORANGE);
@@ -61,8 +62,8 @@ public class GameBoard extends JPanel
     add(toolbar, BorderLayout.PAGE_START);
 
     JPanel players = new JPanel(new GridLayout(1, 2, 16, 4));
-    players.add(createPlayerSide(left));
-    players.add(createPlayerSide(right));
+    players.add(createPlayerSide(gamedata.get(BoardData.KEY_SELF, BoardData.class)));
+    players.add(createPlayerSide(gamedata.get(BoardData.KEY_OPPONENT, BoardData.class)));
     add(players, BorderLayout.CENTER);
   }
 

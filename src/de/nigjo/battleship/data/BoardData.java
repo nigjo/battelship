@@ -23,6 +23,9 @@ import java.util.Random;
  */
 public class BoardData
 {
+  public static final String KEY_SELF = "BoardData.own";
+  public static final String KEY_OPPONENT = "BoardData.opponent";
+
   public static final int[] GAME_CLASSIC = mkgame(5, 4, 4, 3, 3, 3, 2, 2, 2, 2);
   public static final int[] GAME_SIMPLE = mkgame(5, 4, 3, 3, 2);
 
@@ -159,7 +162,7 @@ public class BoardData
     return generateRandom(size, new Random(seed), ships);
   }
 
-  private static BoardData generateRandom(int size, Random rnd, int... ships)
+  public static BoardData generateRandom(int size, Random rnd, int... ships)
   {
     BoardData data = new BoardData(size);
     int index = 0;

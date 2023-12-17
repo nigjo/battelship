@@ -15,7 +15,6 @@
  */
 package de.nigjo.battleship;
 
-
 import java.awt.BorderLayout;
 
 import javax.swing.JFrame;
@@ -24,7 +23,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.ui.GameBoard;
 import de.nigjo.battleship.ui.StatusLine;
 import de.nigjo.battleship.util.Storage;
@@ -41,14 +39,9 @@ public class Launcher
    */
   public static void main(String[] args)
   {
-
-    BoardData own = BoardData.generateRandom(10,
-        System.currentTimeMillis(), BoardData.GAME_SIMPLE);
-    Storage.getDefault().put("board.own", own);
-    BoardData opponent = BoardData.generateRandom(10,
-        System.currentTimeMillis() + 1l, BoardData.GAME_SIMPLE);
-    opponent.setOpponent(true);
-    Storage.getDefault().put("board.opponent", opponent);
+    BattleshipGame game = new BattleshipGame();
+    game.initRandom();
+    Storage.getDefault().put(BattleshipGame.class.getName(), game);
 
     SwingUtilities.invokeLater(Launcher::createUI);
   }
@@ -66,10 +59,10 @@ public class Launcher
     JFrame frame = new JFrame("Schiffe versenken");
     frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-    BoardData own = Storage.getDefault().get("board.own", BoardData.class);
-    BoardData opponent = Storage.getDefault().get("board.opponent", BoardData.class);
+    BattleshipGame game =
+        Storage.getDefault().get(BattleshipGame.class.getName(), BattleshipGame.class);
 
-    frame.getContentPane().add(new GameBoard(own, opponent));
+    frame.getContentPane().add(new GameBoard(game.getGamedata()));
     frame.getContentPane().add(StatusLine.getDefault(), BorderLayout.PAGE_END);
 
     JMenuBar menu = new JMenuBar();
