@@ -18,6 +18,7 @@ package de.nigjo.battleship.util;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -110,6 +111,24 @@ public class Storage
       return defVal;
     }
     return type.cast(value);
+  }
+
+  public <T> T get(Class<T> type)
+  {
+    return get(type.getName(), type);
+  }
+
+  public <T> Optional<T> find(Class<T> type)
+  {
+    T val = get(type);
+    if(val == null)
+    {
+      return Optional.empty();
+    }
+    else
+    {
+      return Optional.of(val);
+    }
   }
 
   public <T> Collection<T> getAll(Class<T> type)
