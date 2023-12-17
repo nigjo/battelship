@@ -1,0 +1,28 @@
+;Diese Datei soll veranschaulichen, wie ein Spiel zwischen zwei Parteien durch
+;eine "Textdatei" gespeichert werden kann.
+;
+; - Jede Partei liest "laufend" den Status der Datei aus
+; - Bei Änderung der Datei wird diese erneut ausgelesen
+; - Das "lokale" Spielfeld wird entsprechend aktualisiert.
+; - Die Idee ist, dass keine Partei das Spielfeld der anderen auslesen kann
+; - Alle Daten sind verschlüsselt
+;
+; - PK - privater Key
+; - ÖK - öffentlicher Key
+; - Jeweilse mit 1 oder 2 für die Spieler:
+;
+PLAYER: <playerid>,ÖK1
+PLAYER: <playerid>,OK2
+;ÖK1 - Spielfeld von Spieler 1. Nur Spieler 1 kann mit dem privaten Key die
+;      Daten des Spielfelds wieder auslesen.
+BOARD: <playerid,toString of BoadData>
+;ÖK2 - Wie bei Spieler 1
+BOARD: <playerid, toString of BoadData>
+;ÖK2 - Zug von Spieler 1. Muss von Spieler 2 ausgelesen werden
+MOVE: <playedid,x,y>
+;ÖK1 - Ergebnis von Spieler 2 zum Zug von Spieler 1 (playedid)
+;      Wiederholung der Koordinaten von Spieler 1 und "Ergebnis" auf dem
+;      Spielfeld von Spieler 2
+RESULT: <playedid,x,y,hit>
+;[...]
+;Weitere Abfolgen von MOVE und RESULT. Spielerwechsel bei !hit.
