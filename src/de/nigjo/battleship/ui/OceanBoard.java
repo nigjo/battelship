@@ -21,6 +21,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.JPanel;
@@ -46,11 +49,14 @@ public class OceanBoard extends JPanel
     this.data = data;
     int dim = (data.getSize() + 3) * 32;
     setPreferredSize(new Dimension(dim, dim));
+    Painter<BoardData> empty = (g, d, w, h) ->
+    {
+    };
 
     painters = List.of(OceanBoard::paintDebugCross,
         OceanBoard::paintGridBoard,
         OceanBoard::paintKoords,
-        OceanBoard::paintShips,
+        data.isOpponent() ? empty : OceanBoard::paintShips,
         OceanBoard::paintShoots
     );
   }
@@ -67,7 +73,10 @@ public class OceanBoard extends JPanel
         Dimension size = getSize();
         for(Painter<BoardData> painter : painters)
         {
-          painter.paint(work, data, size.width, size.height);
+          if(painter != null)
+          {
+            painter.paint(work, data, size.width, size.height);
+          }
         }
       }
       finally
@@ -119,8 +128,17 @@ public class OceanBoard extends JPanel
 
     for(int i = 1; i < cells; i++)
     {
+      g.setColor(Color.BLACK);
       g.drawLine(offX + i * cellSize, offY, offX + i * cellSize, offY + boardSize);
       g.drawLine(offX, offY + i * cellSize, offX + boardSize, offY + i * cellSize);
+      if(i > 1)
+      {
+        g.setColor(Color.CYAN);
+        g.drawLine(offX + i * cellSize, offY + cellSize, offX + i * cellSize, offY
+            + boardSize);
+        g.drawLine(offX + cellSize, offY + i * cellSize, offX + boardSize, offY + i
+            * cellSize);
+      }
     }
   }
 
@@ -130,6 +148,7 @@ public class OceanBoard extends JPanel
     int offX = getGridStartX(width, height) + cellSize;
     int offY = getGridStartY(width, height) + cellSize;
 
+    g.setColor(Color.BLACK);
     for(int i = 0; i < data.getSize(); i++)
     {
       int x = offX + (i + 1) * cellSize;
@@ -153,8 +172,23 @@ public class OceanBoard extends JPanel
     int cellSize = getGridSize(data, width, height);
     int shipSize = (int)(cellSize * .8f);
     int shipOff = (int)((cellSize - shipSize) / 2f + .5f);
-    int offX = getGridStartX(width, height) + 2 * cellSize + shipOff;
-    int offY = getGridStartY(width, height) + 2 * cellSize + shipOff;
+    int offX = getGridStartX(width, height) + 2 * cellSize;
+    int offY = getGridStartY(width, height) + 2 * cellSize;
+
+    Area shipSouth = new Area();
+    shipSouth.add(new Area(
+        new Ellipse2D.Float(shipOff, shipOff, shipSize, shipSize)));
+    shipSouth.add(new Area(
+        new Rectangle2D.Float(shipOff, shipOff, shipSize, shipSize / 2)));
+    shipSouth.transform(AffineTransform.getTranslateInstance(cellSize / -2., cellSize
+        / -2.));
+
+    Area shipNorth = shipSouth.createTransformedArea(
+        AffineTransform.getRotateInstance(Math.toRadians(180.)));
+    Area shipEast = shipSouth.createTransformedArea(
+        AffineTransform.getRotateInstance(Math.toRadians(-90.)));
+    Area shipWest = shipSouth.createTransformedArea(
+        AffineTransform.getRotateInstance(Math.toRadians(90.)));
 
     g.setColor(Color.LIGHT_GRAY);
     int size = data.getSize();
@@ -165,34 +199,31 @@ public class OceanBoard extends JPanel
         int state = data.stateAt(x, y);
         if((state & BoardData.SHIP) == BoardData.SHIP)
         {
+          Graphics2D cell = (Graphics2D)g.create();
+          cell.translate(offX + x * cellSize + cellSize / 2., offY + y * cellSize
+              + cellSize / 2.);
           if((state & BoardData.SHIP_NORTH) == BoardData.SHIP_NORTH)
           {
-            g.fillOval(offX + x * cellSize, offY + y * cellSize, shipSize, shipSize);
-            g.fillRect(offX + x * cellSize, offY + y * cellSize + shipSize / 2,
-                shipSize, shipSize / 2 + 1);
+            cell.fill(shipNorth);
           }
           else if((state & BoardData.SHIP_SOUTH) == BoardData.SHIP_SOUTH)
           {
-            g.fillOval(offX + x * cellSize, offY + y * cellSize, shipSize, shipSize);
-            g.fillRect(offX + x * cellSize, offY + y * cellSize,
-                shipSize, shipSize / 2 + 1);
+            cell.fill(shipSouth);
           }
           else if((state & BoardData.SHIP_EAST) == BoardData.SHIP_EAST)
           {
-            g.fillOval(offX + x * cellSize, offY + y * cellSize, shipSize, shipSize);
-            g.fillRect(offX + x * cellSize, offY + y * cellSize,
-                shipSize / 2 + 1, shipSize);
+            cell.fill(shipEast);
           }
           else if((state & BoardData.SHIP_WEST) == BoardData.SHIP_WEST)
           {
-            g.fillOval(offX + x * cellSize, offY + y * cellSize, shipSize, shipSize);
-            g.fillRect(offX + x * cellSize + shipSize / 2, offY + y * cellSize,
-                shipSize / 2 + 1, shipSize);
+            cell.fill(shipWest);
           }
           else
           {
-            g.fillRect(offX + x * cellSize, offY + y * cellSize, shipSize, shipSize);
+            cell.fillRect(shipOff - cellSize / 2, shipOff - cellSize / 2, shipSize,
+                shipSize);
           }
+          cell.dispose();
         }
       }
     }
