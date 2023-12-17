@@ -15,6 +15,8 @@
  */
 package de.nigjo.battleship.util;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
 public class Storage
 {
   private final Map<String, Object> data;
+  private final PropertyChangeSupport pcs;
 
   private static Storage instance;
 
@@ -44,17 +47,20 @@ public class Storage
   public Storage()
   {
     this.data = new HashMap<>();
+    this.pcs = new PropertyChangeSupport(this);
   }
 
   public void put(String key, Object value)
   {
     if(value == null)
     {
-      data.remove(key);
+      Object old = data.remove(key);
+      pcs.firePropertyChange(key, old, null);
     }
     else
     {
-      data.put(key, value);
+      Object old = data.put(key, value);
+      pcs.firePropertyChange(key, old, value);
     }
   }
 
@@ -106,7 +112,8 @@ public class Storage
       T defVal = def.get();
       if(defVal != null)
       {
-        data.put(key, defVal);
+        Object old = data.put(key, defVal);
+        pcs.firePropertyChange(key, old, defVal);
       }
       return defVal;
     }
@@ -138,4 +145,27 @@ public class Storage
         .map(type::cast)
         .collect(Collectors.toUnmodifiableSet());
   }
+
+  public void addPropertyChangeListener(
+      String propertyName, PropertyChangeListener listener)
+  {
+    pcs.addPropertyChangeListener(propertyName, listener);
+  }
+
+  public void removePropertyChangeListener(
+      String propertyName, PropertyChangeListener listener)
+  {
+    pcs.removePropertyChangeListener(propertyName, listener);
+  }
+
+  public PropertyChangeListener[] getPropertyChangeListeners(String propertyName)
+  {
+    return pcs.getPropertyChangeListeners(propertyName);
+  }
+
+  public boolean hasListeners(String propertyName)
+  {
+    return pcs.hasListeners(propertyName);
+  }
+
 }
