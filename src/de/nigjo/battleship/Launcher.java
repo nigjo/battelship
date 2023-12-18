@@ -64,7 +64,7 @@ public class Launcher
     frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
     Storage.getDefault().put(JFrame.class.getName(), frame);
-    Storage.getDefault().put(DialogDisplayer.class.getName(), new SwingDisplayer(frame));
+    Storage.getDefault().put(DialogDisplayer.class.getName(), new SwingDisplayer());
 
     BattleshipGame game =
         Storage.getDefault().get(BattleshipGame.class.getName(), BattleshipGame.class);

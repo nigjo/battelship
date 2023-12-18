@@ -29,12 +29,7 @@ public class SwingDisplayer implements DialogDisplayer
 
   public SwingDisplayer()
   {
-    this.parent = null;
-  }
-
-  public SwingDisplayer(Component parent)
-  {
-    this.parent = parent;
+    this.parent = ActionsManager.getFrame();
   }
 
   @Override
