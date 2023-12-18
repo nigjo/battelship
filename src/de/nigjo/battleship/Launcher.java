@@ -25,8 +25,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
+import de.nigjo.battleship.ui.DialogDisplayer;
 import de.nigjo.battleship.ui.GameBoard;
 import de.nigjo.battleship.ui.StatusLine;
+import de.nigjo.battleship.ui.SwingDisplayer;
 import de.nigjo.battleship.util.Storage;
 
 /**
@@ -61,6 +63,8 @@ public class Launcher
     JFrame frame = new JFrame("Schiffe versenken");
     frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
+    Storage.getDefault().put(DialogDisplayer.class.getName(), new SwingDisplayer(frame));
+
     BattleshipGame game =
         Storage.getDefault().get(BattleshipGame.class.getName(), BattleshipGame.class);
 
@@ -75,6 +79,6 @@ public class Launcher
     frame.setVisible(true);
 
     StatusLine.getDefault().setText("Willkommen zu Schiffe versenken");
-
   }
+
 }
