@@ -15,14 +15,28 @@
  */
 package de.nigjo.battleship.ui.actions;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import java.awt.event.ActionEvent;
 
 import javax.swing.Icon;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
+import de.nigjo.battleship.BattleshipGame;
+import de.nigjo.battleship.data.BoardData;
+import de.nigjo.battleship.data.KeyManager;
+import de.nigjo.battleship.data.Savegame;
 import de.nigjo.battleship.ui.ActionBase;
+import de.nigjo.battleship.ui.ActionsManager;
+import de.nigjo.battleship.ui.DialogDisplayer;
 import de.nigjo.battleship.util.Bundle;
+import de.nigjo.battleship.util.Storage;
 
 /**
  *
@@ -30,9 +44,64 @@ import de.nigjo.battleship.util.Bundle;
  */
 public class NewGameAction extends ActionBase
 {
+  private File lastFolder = null;
+
   @Override
   public void actionPerformed(ActionEvent e)
   {
+    try
+    {
+      Storage gamedata =
+          Storage.getDefault().find(BattleshipGame.class)
+              .map(BattleshipGame::getGamedata)
+              .orElseThrow();
+      KeyManager km = gamedata.get(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
+      createNewGame(gamedata, km);
+    }
+    catch(IllegalStateException ex)
+    {
+      DialogDisplayer.getDefault()
+          .showError((String)getValue(NAME), ex.getLocalizedMessage());
+    }
+    catch(RuntimeException ex)
+    {
+      Logger.getLogger(NewGameAction.class.getName())
+          .log(Level.WARNING, ex.getLocalizedMessage(), ex);
+      DialogDisplayer.getDefault().showError(getName(), ex.toString());
+    }
+  }
+
+  private void createNewGame(Storage gamedata, KeyManager km)
+  {
+    JFileChooser chooser = new JFileChooser(lastFolder);
+    if(JFileChooser.APPROVE_OPTION == chooser.showSaveDialog(ActionsManager.getFrame()))
+    {
+      File savegameFile = chooser.getSelectedFile();
+      lastFolder = savegameFile.getParentFile();
+      if(savegameFile.exists())
+      {
+        if(JOptionPane.YES_OPTION != DialogDisplayer.getDefault()
+            .showQuestion(getName(),
+                "Die Spielstanddatei existiert bereit. Soll die Datei überschrieben werden?"))
+        {
+          return;
+        }
+      }
+      Savegame savegame = Savegame.createNew(BoardData.GAME_SIMPLE);
+      savegame.addRecord(new Savegame.Record(Savegame.Record.PLAYER, 1,
+          km.getPublicKey()));
+      try
+      {
+        savegame.storeToFile(savegameFile.toPath());
+        gamedata.put(BoardData.KEY_SELF, null);
+        gamedata.put(BoardData.KEY_OPPONENT, null);
+        gamedata.put("gameState", "new");
+      }
+      catch(IOException ex)
+      {
+        throw new UncheckedIOException(ex);
+      }
+    }
 
   }
 
@@ -54,9 +123,6 @@ public class NewGameAction extends ActionBase
     return loadIcon("icons8-ship-16(-mdpi).png");
   }
 
-
-
-
   @Override
   public List<String> getPaths()
   {
@@ -68,6 +134,5 @@ public class NewGameAction extends ActionBase
   {
     return 100;
   }
-
 
 }
