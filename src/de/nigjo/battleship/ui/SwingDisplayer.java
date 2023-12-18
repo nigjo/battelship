@@ -49,4 +49,11 @@ public class SwingDisplayer implements DialogDisplayer
     JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE);
   }
 
+  @Override
+  public int showQuestion(String title, String message)
+  {
+    return JOptionPane.showConfirmDialog(
+        parent, message, title, JOptionPane.YES_NO_OPTION);
+  }
+
 }

@@ -27,6 +27,8 @@ public interface DialogDisplayer
 
   public void showError(String title, String message);
 
+  public int showQuestion(String title, String message);
+
   public static DialogDisplayer getDefault()
   {
     return Storage.getDefault().getOrSet(DialogDisplayer.class.getName(),
