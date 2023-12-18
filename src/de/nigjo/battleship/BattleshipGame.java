@@ -38,7 +38,7 @@ public class BattleshipGame
     op.setOpponent(true);
     this.gamedata.put(BoardData.KEY_OPPONENT, op);
 
-    gamedata.put("keymanager.self", new KeyManager(playerId));
+    gamedata.put(KeyManager.KEY_MANAGER_SELF, new KeyManager(playerId));
   }
 
   public Storage getGamedata()

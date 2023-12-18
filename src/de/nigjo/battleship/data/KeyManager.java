@@ -55,6 +55,9 @@ import javax.crypto.Cipher;
  */
 public class KeyManager
 {
+  public static final String KEY_MANAGER_SELF = "KeyManager.self";
+  public static final String KEY_MANAGER_OPPONENT = "KeyManager.opponent";
+
   private PrivateKey own;
   private PublicKey playerKey;
   private static final int KEY_LENGTH = 1024; // enough for this game. No real
