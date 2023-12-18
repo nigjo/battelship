@@ -28,6 +28,7 @@ import java.awt.geom.Rectangle2D;
 
 import javax.swing.JPanel;
 import javax.swing.Painter;
+import javax.swing.SwingUtilities;
 
 import de.nigjo.battleship.data.BoardData;
 
@@ -37,8 +38,8 @@ import de.nigjo.battleship.data.BoardData;
  */
 public class OceanBoard extends JPanel
 {
-  private List<Painter<BoardData>> painters;
-  private final BoardData data;
+  private final List<Painter<BoardData>> painters;
+  private BoardData data;
 
   /**
    *
@@ -47,7 +48,8 @@ public class OceanBoard extends JPanel
   public OceanBoard(BoardData data)
   {
     this.data = data;
-    int dim = (data.getSize() + 3) * 32;
+    // groesse + Koordinate + Rand
+    int dim = (data.getSize() + 1 + 1) * 32;
     setPreferredSize(new Dimension(dim, dim));
     Painter<BoardData> empty = (g, d, w, h) ->
     {
@@ -56,7 +58,7 @@ public class OceanBoard extends JPanel
     painters = List.of(OceanBoard::paintDebugCross,
         OceanBoard::paintGridBoard,
         OceanBoard::paintKoords,
-        data.isOpponent() ? empty : OceanBoard::paintShips,
+        OceanBoard::paintShips,
         OceanBoard::paintShoots
     );
   }
@@ -107,14 +109,15 @@ public class OceanBoard extends JPanel
   private static int getGridSize(BoardData data, int width, int height)
   {
     int maxSize = Math.min(width, height);
-    return maxSize / (data.getSize() + 3);
+    return maxSize / (data.getSize() + 2);
   }
 
   private static void paintGridBoard(Graphics2D g, BoardData data, int width, int height)
   {
     int cellSize = getGridSize(data, width, height);
-    int offX = getGridStartX(width, height) + cellSize;
-    int offY = getGridStartY(width, height) + cellSize;
+    int borderWidth = cellSize / 2;
+    int offX = getGridStartX(width, height) + borderWidth;
+    int offY = getGridStartY(width, height) + borderWidth;
     int cells = data.getSize() + 1;
     int boardSize = cellSize * (cells);
 
@@ -145,8 +148,9 @@ public class OceanBoard extends JPanel
   private static void paintKoords(Graphics2D g, BoardData data, int width, int height)
   {
     int cellSize = getGridSize(data, width, height);
-    int offX = getGridStartX(width, height) + cellSize;
-    int offY = getGridStartY(width, height) + cellSize;
+    int borderWidth = cellSize / 2;
+    int offX = getGridStartX(width, height) + borderWidth;
+    int offY = getGridStartY(width, height) + borderWidth;
 
     g.setColor(Color.BLACK);
     for(int i = 0; i < data.getSize(); i++)
@@ -170,10 +174,11 @@ public class OceanBoard extends JPanel
   private static void paintShips(Graphics2D g, BoardData data, int width, int height)
   {
     int cellSize = getGridSize(data, width, height);
+    int borderWidth = cellSize / 2;
     int shipSize = (int)(cellSize * .8f);
     int shipOff = (int)((cellSize - shipSize) / 2f + .5f);
-    int offX = getGridStartX(width, height) + 2 * cellSize;
-    int offY = getGridStartY(width, height) + 2 * cellSize;
+    int offX = getGridStartX(width, height) + cellSize + borderWidth;
+    int offY = getGridStartY(width, height) + cellSize + borderWidth;
 
     Area shipSouth = new Area();
     shipSouth.add(new Area(
@@ -232,8 +237,9 @@ public class OceanBoard extends JPanel
   private static void paintShoots(Graphics2D g, BoardData data, int width, int height)
   {
     int cellSize = getGridSize(data, width, height);
-    int offX = getGridStartX(width, height) + cellSize;
-    int offY = getGridStartY(width, height) + cellSize;
+    int borderWidth = cellSize / 2;
+    int offX = getGridStartX(width, height) + borderWidth;
+    int offY = getGridStartY(width, height) + borderWidth;
     int size = data.getSize();
     for(int y = 0; y < size; y++)
     {
@@ -250,6 +256,20 @@ public class OceanBoard extends JPanel
     g.setColor(Color.BLACK);
     g.drawLine(0, 0, width, height);
     g.drawLine(0, height, width, 0);
+  }
+
+  void updateBoard(BoardData boardData)
+  {
+    if(data != null)
+    {
+      if(data.getSize() != boardData.getSize())
+      {
+        throw new IllegalArgumentException(
+            "expected size " + data.getSize() + ", but got " + boardData.getSize());
+      }
+    }
+    this.data = boardData;
+    SwingUtilities.invokeLater(this::repaint);
   }
 
 }
