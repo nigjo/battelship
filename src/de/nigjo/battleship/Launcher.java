@@ -63,6 +63,7 @@ public class Launcher
     JFrame frame = new JFrame("Schiffe versenken");
     frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
+    Storage.getDefault().put(JFrame.class.getName(), frame);
     Storage.getDefault().put(DialogDisplayer.class.getName(), new SwingDisplayer(frame));
 
     BattleshipGame game =
