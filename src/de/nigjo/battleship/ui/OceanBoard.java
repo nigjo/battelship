@@ -67,7 +67,7 @@ public class OceanBoard extends JPanel
   protected void paintComponent(Graphics g)
   {
     super.paintComponent(g);
-    if(g instanceof Graphics2D)
+    if(g instanceof Graphics2D && data != null)
     {
       Graphics2D work = (Graphics2D)g.create();
       try
@@ -260,7 +260,7 @@ public class OceanBoard extends JPanel
 
   void updateBoard(BoardData boardData)
   {
-    if(data != null)
+    if(data != null && boardData != null)
     {
       if(data.getSize() != boardData.getSize())
       {
