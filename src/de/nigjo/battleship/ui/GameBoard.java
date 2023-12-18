@@ -62,22 +62,28 @@ public class GameBoard extends JPanel
     add(toolbar, BorderLayout.PAGE_START);
 
     JPanel players = new JPanel(new GridLayout(1, 2, 16, 4));
-    players.add(createPlayerSide(gamedata.get(BoardData.KEY_SELF, BoardData.class)));
-    players.add(createPlayerSide(gamedata.get(BoardData.KEY_OPPONENT, BoardData.class)));
+    players.add(createPlayerSide(gamedata, BoardData.KEY_SELF));
+    players.add(createPlayerSide(gamedata, BoardData.KEY_OPPONENT));
     add(players, BorderLayout.CENTER);
   }
 
-  private static JPanel createPlayerSide(BoardData playerData)
+  private static JPanel createPlayerSide(Storage gamedata, String boardkey)
   {
     JPanel playerBoard = new JPanel(new BorderLayout(2, 4));
+
+    BoardData playerData = gamedata.get(boardkey, BoardData.class);
 
     playerBoard.add(
         new JLabel(playerData.isOpponent() ? "Gegnergebiet" : "Eigene Schiffe"),
         BorderLayout.PAGE_START);
     JToolBar playerActions = new JToolBar("Actions", JToolBar.VERTICAL);
     playerBoard.add(playerActions, BorderLayout.LINE_START);
+    OceanBoard ocean = new OceanBoard(playerData);
+    playerBoard.add(ocean, BorderLayout.CENTER);
 
-    playerBoard.add(new OceanBoard(playerData), BorderLayout.CENTER);
+    gamedata.addPropertyChangeListener(boardkey,
+        pce -> ocean.updateBoard((BoardData)pce.getNewValue())
+    );
 
     return playerBoard;
   }
