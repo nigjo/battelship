@@ -24,6 +24,9 @@ import java.util.ServiceLoader;
 import java.util.TreeMap;
 
 import javax.swing.Action;
+import javax.swing.JFrame;
+
+import de.nigjo.battleship.util.Storage;
 
 /**
  *
@@ -32,6 +35,23 @@ import javax.swing.Action;
 public class ActionsManager
 {
   private static ActionsManager MANAGER;
+
+  public static JFrame getFrame()
+  {
+    return Storage.getDefault().getOrSet(
+        JFrame.class.getName(), JFrame.class, () ->
+    {
+      for(Object f : JFrame.getFrames())
+      {
+        if(f instanceof JFrame)
+        {
+          return (JFrame)f;
+        }
+      }
+      return null;
+    });
+  }
+
   private final Map<String, Map<Integer, ActionBase>> actions;
 
   private ActionsManager()
