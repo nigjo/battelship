@@ -25,30 +25,38 @@ import javax.swing.JOptionPane;
  */
 public class SwingDisplayer implements DialogDisplayer
 {
-  private final Component parent;
+  private Component parent;
 
   public SwingDisplayer()
   {
-    this.parent = ActionsManager.getFrame();
+  }
+
+  private Component getParent()
+  {
+    if(parent == null)
+    {
+      parent = ActionsManager.getFrame();
+    }
+    return parent;
   }
 
   @Override
   public void showMessage(String title, String message)
   {
-    JOptionPane.showMessageDialog(parent, message, title, JOptionPane.PLAIN_MESSAGE);
+    JOptionPane.showMessageDialog(getParent(), message, title, JOptionPane.PLAIN_MESSAGE);
   }
 
   @Override
   public void showError(String title, String message)
   {
-    JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE);
+    JOptionPane.showMessageDialog(getParent(), message, title, JOptionPane.ERROR_MESSAGE);
   }
 
   @Override
   public int showQuestion(String title, String message)
   {
-    return JOptionPane.showConfirmDialog(
-        parent, message, title, JOptionPane.YES_NO_OPTION);
+    return JOptionPane.showConfirmDialog(getParent(), message, title,
+        JOptionPane.YES_NO_OPTION);
   }
 
 }
