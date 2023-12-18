@@ -15,24 +15,14 @@
  */
 package de.nigjo.battleship.data;
 
-import de.nigjo.battleship.data.Savegame;
-
-import java.io.BufferedReader;
 import java.io.Closeable;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
-import java.nio.channels.FileLock;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -51,7 +41,7 @@ public class SavegameManager implements Closeable
   private final ExecutorService updater;
   private volatile boolean checking;
 
-  public SavegameManager(Path saveGameFile, Consumer<Savegame> savegame)
+  public SavegameManager(Path saveGameFile, Consumer<Savegame> savegameConsumer)
       throws IOException
   {
     this.saveGameFile = saveGameFile;
@@ -107,47 +97,7 @@ public class SavegameManager implements Closeable
     checking = true;
     try
     {
-      var fis = new FileInputStream(saveGameFile.toFile());
-      FileLock lock = fis.getChannel().lock();
-      try(BufferedReader in = new BufferedReader(
-          new InputStreamReader(fis, StandardCharsets.UTF_8)))
-      {
-        Savegame savedgame = new Savegame();
-        String zeile;
-        String comment = null;
-        while(null != (zeile = in.readLine()))
-        {
-          if(zeile.isBlank())
-          {
-            continue;
-          }
-          if(zeile.startsWith(";"))
-          {
-            if(comment == null)
-            {
-              comment = zeile.substring(1);
-            }
-            else
-            {
-              comment += "\n" + zeile.substring(1);
-            }
-          }
-          else{
-            int colon = zeile.indexOf(':');
-            if(colon<0)
-              continue;
-            String cmd = zeile.substring(0,colon);
-          }
-        }
-      }
-      catch(UncheckedIOException uioe)
-      {
-        throw uioe.getCause();
-      }
-      finally
-      {
-        lock.release();
-      }
+      Savegame savedGame = Savegame.readFromFile(saveGameFile);
     }
     catch(IOException ex)
     {
@@ -166,60 +116,6 @@ public class SavegameManager implements Closeable
     {
       closer.run();
     }
-  }
-
-  private void parseLine(Savegame savedgame, String storedLine)
-  {
-    if(storedLine.startsWith(";"))
-    {
-
-    }
-  }
-
-  public static class Record
-  {
-    public static final String VERSION = "VERSION";
-    public static final String PLAYER = "PLAYER";
-    public static final String BOARD = "BOARD";
-    public static final String SHOOT = "SHOOT";
-    public static final String OUTCOME = "OUTCOME";
-    private final String kind;
-    private final int playerid;
-    private final List<String> payload;
-    private String comment;
-
-    public Record(String kind, int playerid, String... payload)
-    {
-      this.kind = kind;
-      this.playerid = playerid;
-      this.payload = Arrays.asList(payload);
-    }
-
-    public String getKind()
-    {
-      return kind;
-    }
-
-    public int getPlayerid()
-    {
-      return playerid;
-    }
-
-    public List<String> getPayload()
-    {
-      return payload;
-    }
-
-    public String getComment()
-    {
-      return comment;
-    }
-
-    public void setComment(String comment)
-    {
-      this.comment = comment;
-    }
-
   }
 
 }
