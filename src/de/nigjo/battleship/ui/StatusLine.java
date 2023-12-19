@@ -67,11 +67,15 @@ public class StatusLine extends JPanel
     lastUpdate.set(System.currentTimeMillis());
     updater.schedule(() ->
     {
-      long delta = System.currentTimeMillis() - lastUpdate.get();
-      if(SECONDS_TO_FADE * 999l < delta)
+      SwingUtilities.invokeLater(() ->
       {
-        SwingUtilities.invokeLater(() -> text.setText(NBSP));
-      }
+        long delta = System.currentTimeMillis() - lastUpdate.get();
+        if(SECONDS_TO_FADE * 999l < delta)
+        {
+          text.setText(NBSP);
+          lastUpdate.set(0l);
+        }
+      });
     }, SECONDS_TO_FADE, TimeUnit.SECONDS);
   }
 }
