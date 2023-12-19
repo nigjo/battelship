@@ -39,6 +39,31 @@ public class BattleshipGame
     this.gamedata.put(BoardData.KEY_OPPONENT, op);
 
     gamedata.put(KeyManager.KEY_MANAGER_SELF, new KeyManager(playerId));
+
+    //just run-test the keymanager
+    validateKeyManager();
+  }
+
+  private void validateKeyManager()
+  {
+    KeyManager km = gamedata.get(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
+
+    validate(km, "BattleShip");
+    validate(km, "A".repeat(100));
+
+    String plainBoard =
+        this.gamedata.get(BoardData.KEY_SELF, BoardData.class).toString();
+    validate(km, plainBoard);
+  }
+
+  private static void validate(KeyManager km, String expected)
+  {
+    String resultE1 = km.encode(expected);
+    String resultD1 = km.decode(resultE1);
+    if(!expected.equals(resultD1))
+    {
+      throw new IllegalStateException("expected " + expected + " but got " + resultD1);
+    }
   }
 
   public Storage getGamedata()
