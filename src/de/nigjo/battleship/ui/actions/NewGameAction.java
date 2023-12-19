@@ -94,7 +94,9 @@ public class NewGameAction extends ActionBase
       {
         savegame.storeToFile(savegameFile.toPath());
         gamedata.put(BoardData.KEY_SELF, new BoardData(10));
-        gamedata.put(BoardData.KEY_OPPONENT, new BoardData(10));
+        BoardData opBoard = new BoardData(10);
+        opBoard.setOpponent(true);
+        gamedata.put(BoardData.KEY_OPPONENT, opBoard);
         gamedata.put("gameState", "new");
       }
       catch(IOException ex)
