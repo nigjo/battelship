@@ -15,21 +15,15 @@
  */
 package de.nigjo.battleship.data;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  *
@@ -38,6 +32,7 @@ import java.util.stream.IntStream;
 public class Savegame
 {
   private final List<Record> records;
+  private Path filename;
 
   private Savegame()
   {
@@ -60,6 +55,24 @@ public class Savegame
   public void addRecord(Record record)
   {
     this.records.add(record);
+    if(filename != null)
+    {
+      try
+      {
+        storeToFile(filename);
+      }
+      catch(IOException ex)
+      {
+        throw new UncheckedIOException(ex);
+      }
+    }
+  }
+
+  public Stream<Record> records(int player, String kind)
+  {
+    return this.records.stream()
+        .filter(r -> r.getPlayerid() == player)
+        .filter(r -> kind.equals(r.getKind()));
   }
 
   public static Savegame readFromFile(Path savegameFile) throws IOException
@@ -99,6 +112,8 @@ public class Savegame
         }
       }
 
+      savedgame.setFilename(savegameFile);
+
       return savedgame;
     }
     catch(UncheckedIOException uioe)
@@ -131,15 +146,30 @@ public class Savegame
 
   public void storeToFile(Path savegameFile) throws IOException
   {
-    try(BufferedWriter out = Files.newBufferedWriter(savegameFile, StandardCharsets.UTF_8,
-        StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))
+    var fos = new FileOutputStream(savegameFile.toFile());
+    FileLock lock = fos.getChannel().lock();
+    try(BufferedWriter out = new BufferedWriter(
+        new OutputStreamWriter(fos, StandardCharsets.UTF_8)))
     {
       for(Record record : this.records)
       {
         out.write(record.toString());
         out.newLine();
       }
+      setFilename(savegameFile);
     }
+    finally
+    {
+      if(lock.isValid())
+      {
+        lock.release();
+      }
+    }
+  }
+
+  private void setFilename(Path savegameFile)
+  {
+    this.filename = savegameFile;
   }
 
   public static class Record
