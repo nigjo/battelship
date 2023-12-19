@@ -59,6 +59,7 @@ public class OceanBoard extends JPanel
         OceanBoard::paintGridBoard,
         OceanBoard::paintKoords,
         OceanBoard::paintShips,
+        new ShipsPlacer(this, () -> this.data),
         OceanBoard::paintShoots
     );
   }
@@ -88,7 +89,7 @@ public class OceanBoard extends JPanel
     }
   }
 
-  private static int getGridStartX(int width, int height)
+  public static int getGridStartX(int width, int height)
   {
     if(width <= height)
     {
@@ -97,7 +98,7 @@ public class OceanBoard extends JPanel
     return (width - height) / 2;
   }
 
-  private static int getGridStartY(int width, int height)
+  public static int getGridStartY(int width, int height)
   {
     if(height <= width)
     {
@@ -106,7 +107,7 @@ public class OceanBoard extends JPanel
     return (height - width) / 2;
   }
 
-  private static int getGridSize(BoardData data, int width, int height)
+  public static int getGridSize(BoardData data, int width, int height)
   {
     int maxSize = Math.min(width, height);
     return maxSize / (data.getSize() + 2);
@@ -253,7 +254,7 @@ public class OceanBoard extends JPanel
 
   private static void paintDebugCross(Graphics2D g, BoardData data, int width, int height)
   {
-    g.setColor(Color.BLACK);
+    g.setColor(new Color(0, 0, 0, 16));
     g.drawLine(0, 0, width, height);
     g.drawLine(0, height, width, 0);
   }
