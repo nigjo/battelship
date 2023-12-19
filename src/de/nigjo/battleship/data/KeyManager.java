@@ -17,6 +17,7 @@ package de.nigjo.battleship.data;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,7 +61,8 @@ public class KeyManager
 
   private PrivateKey own;
   private PublicKey playerKey;
-  private static final int KEY_LENGTH = 1024; // enough for this game. No real
+  private static final int KEY_LENGTH = 1024; // enough for this game. No real security
+  private static final int BLOCK_SIZE = 72;
 
   /**
    * Erstellt einen neuen Schlüssel
@@ -156,9 +158,16 @@ public class KeyManager
       Cipher decryptCipher = Cipher.getInstance("RSA");
       decryptCipher.init(Cipher.DECRYPT_MODE, own);
       byte[] decoded = Base64.getDecoder().decode(data);
-      byte[] message = decryptCipher.doFinal(decoded);
-      return new String(message, StandardCharsets.UTF_8);
+      int blocksize = KEY_LENGTH / 8;
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream(BLOCK_SIZE << 1);
+      for(int off = 0; off < decoded.length; off += blocksize)
+      {
+        byte[] part = decryptCipher.doFinal(decoded, off, blocksize);
+        buffer.writeBytes(part);
+      }
+      return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
     }
+
     catch(GeneralSecurityException ex)
     {
       Logger.getLogger(KeyManager.class.getName()).log(Level.SEVERE, ex.toString(), ex);
@@ -173,8 +182,19 @@ public class KeyManager
       Cipher encryptCipher = Cipher.getInstance("RSA");
       encryptCipher.init(Cipher.ENCRYPT_MODE, playerKey);
       byte[] sourceMessage = message.getBytes(StandardCharsets.UTF_8);
-      byte[] data = encryptCipher.doFinal(sourceMessage);
-      return Base64.getEncoder().encodeToString(data);
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream(BLOCK_SIZE << 1);
+      int off = 0;
+      int len = sourceMessage.length;
+      while(len > BLOCK_SIZE)
+      {
+        byte[] block = encryptCipher.doFinal(sourceMessage, off, BLOCK_SIZE);
+        buffer.writeBytes(block);
+        off += BLOCK_SIZE;
+        len -= BLOCK_SIZE;
+      }
+      byte[] data = encryptCipher.doFinal(sourceMessage, off, len);
+      buffer.writeBytes(data);
+      return Base64.getEncoder().encodeToString(buffer.toByteArray());
     }
     catch(GeneralSecurityException ex)
     {
