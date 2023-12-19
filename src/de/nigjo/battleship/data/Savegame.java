@@ -29,6 +29,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  *
@@ -47,6 +48,12 @@ public class Savegame
   {
     Savegame game = new Savegame();
     game.addRecord(new Record(Record.VERSION, 1, "1"));
+    String shipsList = IntStream.of(ships)
+        .boxed()
+        .reduce((String)null,
+            (s, i) -> s == null ? ("" + i) : (s + "," + i),
+            (a, s) -> a + "," + s);
+    game.addRecord(new Record(Record.SHIPS, 1, shipsList));
     return game;
   }
 
