@@ -88,8 +88,8 @@ public class NewGameAction extends ActionBase
         }
       }
       Savegame savegame = Savegame.createNew(BoardData.GAME_SIMPLE);
-      savegame.addRecord(new Savegame.Record(Savegame.Record.PLAYER, 1,
-          km.getPublicKey()));
+      savegame.addRecord(
+          new Savegame.Record(Savegame.Record.PLAYER, 1, km.getPublicKey()));
       try
       {
         savegame.storeToFile(savegameFile.toPath());
@@ -97,6 +97,7 @@ public class NewGameAction extends ActionBase
         BoardData opBoard = new BoardData(10);
         opBoard.setOpponent(true);
         gamedata.put(BoardData.KEY_OPPONENT, opBoard);
+        gamedata.put(Savegame.class.getName(), savegame);
         gamedata.put("gameState", "new");
       }
       catch(IOException ex)
