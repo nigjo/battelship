@@ -60,8 +60,8 @@ public class Launcher
       return;
     }
 
-    BattleshipGame game = new BattleshipGame(Path.of("battleship.player.id"));
-    game.initRandom();
+    String idFile = CliArg.id.isDefined() ? CliArg.id.getParam() : "battleship.player.id";
+    BattleshipGame game = new BattleshipGame(Path.of(idFile));
     Storage.getDefault().put(BattleshipGame.class.getName(), game);
 
     if(CliArg.help.isDefined())
