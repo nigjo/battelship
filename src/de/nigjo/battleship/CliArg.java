@@ -105,7 +105,7 @@ public enum CliArg
         if(arg.charAt(1) == '-')
         {
           lastArg = Arrays.stream(CliArg.values())
-              .filter(arg.substring(2)::equals)
+              .filter(a->arg.substring(2).equals(a.name()))
               .findFirst()
               .orElseThrow(() -> new IllegalArgumentException("unknown option " + arg));
         }
@@ -224,5 +224,27 @@ public enum CliArg
           .replace("\n", "<br>");
       SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null, uiHelp));
     }
+  }
+
+  public static void showError(IllegalArgumentException ex)
+  {
+    if(!GraphicsEnvironment.isHeadless())
+    {
+      JOptionPane.showMessageDialog(null, ex.getLocalizedMessage(),
+          "Battleship", JOptionPane.ERROR_MESSAGE);
+    }
+    else
+    {
+      Console console = System.console();
+      if(console != null)
+      {
+        console.writer().println(ex.getLocalizedMessage());
+      }
+      else
+      {
+        System.err.println(ex.getLocalizedMessage());
+      }
+    }
+
   }
 }
