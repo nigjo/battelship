@@ -18,6 +18,7 @@ package de.nigjo.battleship;
 import java.nio.file.Path;
 
 import java.awt.BorderLayout;
+import java.awt.GraphicsEnvironment;
 
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
@@ -43,14 +44,37 @@ public class Launcher
    */
   public static void main(String[] args)
   {
+    if(!GraphicsEnvironment.isHeadless())
+    {
+      SwingUtilities.invokeLater(Launcher::initUI);
+    }
+
+    try
+    {
+      CliArg.parse(args);
+    }
+    catch(IllegalArgumentException ex)
+    {
+      CliArg.showError(ex);
+      System.exit(1);
+      return;
+    }
+
     BattleshipGame game = new BattleshipGame(Path.of("battleship.player.id"));
     game.initRandom();
     Storage.getDefault().put(BattleshipGame.class.getName(), game);
 
-    SwingUtilities.invokeLater(Launcher::createUI);
+    if(CliArg.help.isDefined())
+    {
+      CliArg.showHelp();
+    }
+    else
+    {
+      SwingUtilities.invokeLater(Launcher::createUI);
+    }
   }
 
-  private static void createUI()
+  private static void initUI()
   {
     try
     {
@@ -60,6 +84,10 @@ public class Launcher
     {
     }
 
+  }
+
+  private static void createUI()
+  {
     JFrame frame = new JFrame("Schiffe versenken");
     frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
