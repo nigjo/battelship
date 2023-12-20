@@ -81,6 +81,16 @@ public enum CliArg
     this.shortOption = shortOption;
   }
 
+  public boolean isDefined()
+  {
+    return defined;
+  }
+
+  public String getParam()
+  {
+    return param;
+  }
+
   @Override
   public String toString()
   {
@@ -105,7 +115,7 @@ public enum CliArg
         if(arg.charAt(1) == '-')
         {
           lastArg = Arrays.stream(CliArg.values())
-              .filter(a->arg.substring(2).equals(a.name()))
+              .filter(a -> arg.substring(2).equals(a.name()))
               .findFirst()
               .orElseThrow(() -> new IllegalArgumentException("unknown option " + arg));
         }
@@ -153,11 +163,6 @@ public enum CliArg
       }
       lastArg = null;
     }
-  }
-
-  public boolean isDefined()
-  {
-    return defined;
   }
 
   public String toHelpString()
