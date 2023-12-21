@@ -89,7 +89,7 @@ public class BattleshipGame
     Random rnd = new Random(seed);
     BoardData own = BoardData.generateRandom(10, rnd, BoardData.GAME_SIMPLE);
     gamedata.put(BoardData.KEY_SELF, own);
-    BoardData opponent = new BoardData(10);
+    BoardData opponent = BoardData.generateRandom(10, rnd, BoardData.GAME_SIMPLE);
     opponent.setOpponent(true);
     gamedata.put(BoardData.KEY_OPPONENT, opponent);
   }
