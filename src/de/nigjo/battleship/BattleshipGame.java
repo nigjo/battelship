@@ -29,6 +29,14 @@ import de.nigjo.battleship.util.Storage;
 public class BattleshipGame
 {
   private final Storage gamedata;
+  public static final String KEY_PLAYER_NUM = "BattleshipGame.player";
+  public static final String KEY_STATE = "BattleshipGame.gamestate";
+  public static final String STATE_PLACEMENT = "BattleshipGame.gamestate.placement";
+  public static final String STATE_WAIT_START = "BattleshipGame.gamestate.waitForStart";
+  public static final String STATE_WAIT_RESPONSE =
+      "BattleshipGame.gamestate.waitForResult";
+  public static final String STATE_WAIT_ATTACK = "BattleshipGame.gamestate.waitForAttack";
+  public static final String STATE_FINISHED = "BattleshipGame.gamestate.endOfGame";
 
   public BattleshipGame(Path playerId)
   {
