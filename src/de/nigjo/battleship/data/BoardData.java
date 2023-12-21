@@ -32,9 +32,9 @@ public class BoardData
   private static final char[] STATUS = ".-WwEeHh.-NnSsVv".toCharArray();
   public static final int UNKNOWN = 0;
   public static final int SHOOTED_AT = 1; //=1
-  public static final int SHIP_START = 1 << 2;
-  public static final int SHIP_END = 1 << 3;
-  public static final int VERTICAL = 1 << 4;
+  public static final int SHIP_START = 1 << 1;
+  public static final int SHIP_END = 1 << 2;
+  public static final int VERTICAL = 1 << 3;
   public static final int SHIP = SHIP_START | SHIP_END;
   public static final int SHIP_MID_H = SHIP_START | SHIP_END;
   public static final int SHIP_MID_V = SHIP_START | SHIP_END | VERTICAL;
@@ -42,7 +42,7 @@ public class BoardData
   public static final int SHIP_EAST = SHIP_END;
   public static final int SHIP_NORTH = SHIP_START | VERTICAL;
   public static final int SHIP_SOUTH = SHIP_END | VERTICAL;
-  public static final int ID_SHIFT = 5;//=16
+  public static final int ID_SHIFT = 4;//=16
   public static final int MAX_STATUS = (1 << ID_SHIFT) - 1;//=15
 
   private final int[] board;
@@ -84,7 +84,8 @@ public class BoardData
     {
       throw new IllegalStateException("board is already in use");
     }
-    if(xstart + length >= size || ystart + length >= size)
+    if(xstart + (vertical ? 0 : length) > size
+        || ystart + (vertical ? length : 0) > size)
     {
       throw new IllegalArgumentException("ship can't be places outside board");
     }
