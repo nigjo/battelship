@@ -45,6 +45,7 @@ public class ShipsPlacer implements Painter<BoardData>
 {
   private final JComponent context;
   private final Supplier<BoardData> boarddata;
+  private int currentPlayer;
   private boolean active;
   private Point validLocation;
   private Point lastMouseLocation;
@@ -66,6 +67,7 @@ public class ShipsPlacer implements Painter<BoardData>
             .orElseThrow();
     gamedata.addPropertyChangeListener(BattleshipGame.KEY_STATE,
         pce -> checkGameState(pce.getSource(), pce.getNewValue()));
+    currentPlayer = gamedata.getInt(BattleshipGame.KEY_PLAYER_NUM, 0);
     MouseInputAdapter mia = new MouseInputAdapter()
     {
       boolean inside = false;
@@ -143,8 +145,9 @@ public class ShipsPlacer implements Painter<BoardData>
                 KeyManager km = s.get(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
                 String playload = km.encode(board.toString());
                 s.get(Savegame.class)
-                    .addRecord(new Savegame.Record(Savegame.Record.BOARD, 1, playload));
-                s.put("gameState", "wait");
+                    .addRecord(new Savegame.Record(
+                        Savegame.Record.BOARD, currentPlayer, playload));
+                s.put(BattleshipGame.KEY_STATE, BattleshipGame.STATE_WAIT_START);
               });
         }
 
