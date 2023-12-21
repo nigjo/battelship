@@ -203,24 +203,24 @@ public class OceanBoard extends JPanel
       for(int x = 0; x < size; x++)
       {
         int state = data.stateAt(x, y);
-        if((state & BoardData.SHIP) == BoardData.SHIP)
+        if((state & BoardData.SHIP) > 0)
         {
           Graphics2D cell = (Graphics2D)g.create();
           cell.translate(offX + x * cellSize + cellSize / 2., offY + y * cellSize
               + cellSize / 2.);
-          if((state & BoardData.SHIP_NORTH) == BoardData.SHIP_NORTH)
+          if((state & BoardData.SHIP_MID_V) == BoardData.SHIP_NORTH)
           {
             cell.fill(shipNorth);
           }
-          else if((state & BoardData.SHIP_SOUTH) == BoardData.SHIP_SOUTH)
+          else if((state & BoardData.SHIP_MID_V) == BoardData.SHIP_SOUTH)
           {
             cell.fill(shipSouth);
           }
-          else if((state & BoardData.SHIP_EAST) == BoardData.SHIP_EAST)
+          else if((state & BoardData.SHIP_MID_H) == BoardData.SHIP_EAST)
           {
             cell.fill(shipEast);
           }
-          else if((state & BoardData.SHIP_WEST) == BoardData.SHIP_WEST)
+          else if((state & BoardData.SHIP_MID_H) == BoardData.SHIP_WEST)
           {
             cell.fill(shipWest);
           }

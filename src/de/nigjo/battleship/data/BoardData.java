@@ -28,20 +28,22 @@ public class BoardData
 
   public static final int[] GAME_CLASSIC = mkgame(5, 4, 4, 3, 3, 3, 2, 2, 2, 2);
   public static final int[] GAME_SIMPLE = mkgame(5, 4, 3, 3, 2);
-
+  //                                    012345678901234567890123456789
+  private static final char[] STATUS = ".-WwEeHh.-NnSsVv".toCharArray();
   public static final int UNKNOWN = 0;
-  public static final int SHOOTED_AT = 1;
-  public static final int SHIP = 1 << 1;
-  public static final int HITTED_SHIP = SHIP | SHOOTED_AT;
-  public static final int SHIP_VERTICAL = SHIP | 1 << 2;
-  public static final int SHIP_END = SHIP | 1 << 3;
-  public static final int SHIP_START = SHIP | 1 << 4;
+  public static final int SHOOTED_AT = 1; //=1
+  public static final int SHIP_START = 1 << 2;
+  public static final int SHIP_END = 1 << 3;
+  public static final int VERTICAL = 1 << 4;
+  public static final int SHIP = SHIP_START | SHIP_END;
+  public static final int SHIP_MID_H = SHIP_START | SHIP_END;
+  public static final int SHIP_MID_V = SHIP_START | SHIP_END | VERTICAL;
   public static final int SHIP_WEST = SHIP_START;
   public static final int SHIP_EAST = SHIP_END;
-  public static final int SHIP_NORTH = SHIP_START | SHIP_VERTICAL;
-  public static final int SHIP_SOUTH = SHIP_END | SHIP_VERTICAL;
-  public static final int ID_SHIFT = 6;
-  public static final int MAX_STATUS = (1 << ID_SHIFT) - 1;
+  public static final int SHIP_NORTH = SHIP_START | VERTICAL;
+  public static final int SHIP_SOUTH = SHIP_END | VERTICAL;
+  public static final int ID_SHIFT = 5;//=16
+  public static final int MAX_STATUS = (1 << ID_SHIFT) - 1;//=15
 
   private final int[] board;
   private boolean hasShips;
@@ -82,12 +84,12 @@ public class BoardData
     {
       throw new IllegalStateException("board is already in use");
     }
-    if(xstart + length > size || ystart + length > size)
+    if(xstart + length >= size || ystart + length >= size)
     {
       throw new IllegalArgumentException("ship can't be places outside board");
     }
 
-    int shipId = (vertical ? SHIP_VERTICAL : SHIP) | (shipIndex << ID_SHIFT);
+    int shipId = (vertical ? SHIP_MID_V : SHIP_MID_H) | (shipIndex << ID_SHIFT);
 
     int[] backup = new int[board.length];
     System.arraycopy(board, 0, backup, 0, board.length);
@@ -96,7 +98,7 @@ public class BoardData
       int y = vertical ? ystart + i : ystart;
       int x = vertical ? xstart : (xstart + i);
 
-      if((board[y * size + x] & SHIP) != 0)
+      if((board[y * size + x] & MAX_STATUS) != 0)
       {
         System.arraycopy(backup, 0, board, 0, board.length);
         throw new IllegalArgumentException("ship collides with placed ship");
@@ -104,11 +106,11 @@ public class BoardData
       board[y * size + x] = shipId;
       if(i == 0)
       {
-        board[y * size + x] |= SHIP_START;
+        board[y * size + x] ^= SHIP_END;
       }
       else if(i == length - 1)
       {
-        board[y * size + x] |= SHIP_END;
+        board[y * size + x] ^= SHIP_START;
       }
     }
     hasShips = true;
@@ -121,7 +123,7 @@ public class BoardData
       throw new IllegalStateException("this is your own board");
     }
     active = true;
-    board[y * size + x] &= hit ? HITTED_SHIP : SHOOTED_AT;
+    board[y * size + x] &= hit ? SHIP : SHOOTED_AT;
   }
 
   public boolean shootAt(int x, int y)
@@ -133,23 +135,39 @@ public class BoardData
     active = true;
     board[y * size + x] &= SHOOTED_AT;
 
-    return (board[y * size + x] & SHIP) == SHIP;
+    return (board[y * size + x] & SHIP) > 0;
   }
 
   @Override
   public String toString()
   {
-    char[] state = "·-SX".toCharArray();
+    //char[] state = "·-SX".toCharArray();
 
-    char[] data = new char[size * size];
-    for(int y = 0; y < size; y++)
+    char[] data = new char[board.length];
+    for(int i = 0; i < board.length; i++)
     {
-      for(int x = 0; x < size; x++)
-      {
-        data[y * size + x] = state[board[y * size + x] & HITTED_SHIP];
-      }
+      data[i] = STATUS[board[i] & MAX_STATUS];
     }
     return new String(data);
+  }
+
+  public static BoardData parse(String boarddata)
+  {
+    //·=empty, -=miss, S=Ship, X=hit
+    int size = (int)Math.sqrt(boarddata.length());
+    if(size * size != boarddata.length())
+    {
+      throw new IllegalArgumentException("invalid board data length");
+    }
+
+    String state = new String(STATUS);
+    BoardData data = new BoardData(size);
+    for(int i = 0; i < data.board.length; i++)
+    {
+      data.board[i] = state.indexOf(boarddata.charAt(i));
+    }
+
+    return data;
   }
 
   public static BoardData generateRandom(int size, int... ships)
