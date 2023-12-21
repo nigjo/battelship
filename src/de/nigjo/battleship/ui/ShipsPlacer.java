@@ -114,7 +114,7 @@ public class ShipsPlacer implements Painter<BoardData>
       active = "new".equals(state);
       ships = savegame.records(1, Savegame.Record.SHIPS)
           .findFirst().stream()
-          .flatMap(r -> r.getPayload().stream())
+          .map(r -> r.getPayload())
           .flatMap(s -> Arrays.stream(s.split(",")))
           .mapToInt(Integer::parseInt)
           .toArray();

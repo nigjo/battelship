@@ -98,7 +98,8 @@ public class NewGameAction extends ActionBase
         opBoard.setOpponent(true);
         gamedata.put(BoardData.KEY_OPPONENT, opBoard);
         gamedata.put(Savegame.class.getName(), savegame);
-        gamedata.put("gameState", "new");
+        gamedata.put(BattleshipGame.KEY_PLAYER_NUM, 1);
+        gamedata.put(BattleshipGame.KEY_STATE, BattleshipGame.STATE_PLACEMENT);
       }
       catch(IOException ex)
       {

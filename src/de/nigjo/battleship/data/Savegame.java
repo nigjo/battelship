@@ -20,7 +20,6 @@ import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -204,13 +203,13 @@ public class Savegame
 
     private final String kind;
     private final int playerid;
-    private final List<String> payload;
+    private final String payload;
 
-    public Record(String kind, int playerid, String... payload)
+    public Record(String kind, int playerid, String payload)
     {
       this.kind = kind;
       this.playerid = playerid;
-      this.payload = Arrays.asList(payload);
+      this.payload = payload;
     }
 
     public String getKind()
@@ -223,7 +222,7 @@ public class Savegame
       return playerid;
     }
 
-    public List<String> getPayload()
+    public String getPayload()
     {
       return payload;
     }
