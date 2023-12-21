@@ -64,7 +64,7 @@ public class ShipsPlacer implements Painter<BoardData>
         Storage.getDefault().find(BattleshipGame.class)
             .map(BattleshipGame::getGamedata)
             .orElseThrow();
-    gamedata.addPropertyChangeListener("gameState",
+    gamedata.addPropertyChangeListener(BattleshipGame.KEY_STATE,
         pce -> checkGameState(pce.getSource(), pce.getNewValue()));
     MouseInputAdapter mia = new MouseInputAdapter()
     {
@@ -111,7 +111,7 @@ public class ShipsPlacer implements Painter<BoardData>
     if(source instanceof Storage)
     {
       Savegame savegame = ((Storage)source).get(Savegame.class);
-      active = "new".equals(state);
+      active = BattleshipGame.STATE_PLACEMENT.equals(state);
       ships = savegame.records(1, Savegame.Record.SHIPS)
           .findFirst().stream()
           .map(r -> r.getPayload())
