@@ -41,7 +41,7 @@ public class Savegame
   public static Savegame createNew(int... ships)
   {
     Savegame game = new Savegame();
-    game.addRecord(new Record(Record.VERSION, 1, "1"));
+    game.addRecord(new Record(Record.VERSION, 1, "0"));
     String shipsList = IntStream.of(ships)
         .boxed()
         .reduce((String)null,
