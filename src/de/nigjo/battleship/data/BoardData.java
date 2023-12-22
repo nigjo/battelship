@@ -187,8 +187,8 @@ public class BoardData
     int index = 0;
     for(int ship : ships)
     {
-      int x = rnd.nextInt(size - ship);
-      int y = rnd.nextInt(size - ship);
+      int x = rnd.nextInt(size - ship + 1);
+      int y = rnd.nextInt(size - ship + 1);
       boolean vertical = rnd.nextBoolean();
       try
       {
