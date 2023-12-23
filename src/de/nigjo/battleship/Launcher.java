@@ -89,17 +89,23 @@ public class Launcher
         CliArg.id.isDefined() ? CliArg.id.getParam() : "battleship.player.id";
 
     BattleshipGame game = new BattleshipGame(Path.of(idFileName));
-    game.initRandom();
     game.updateState(BattleshipGame.STATE_FINISHED);
 
     Storage.getDefault().put(BattleshipGame.class.getName(), game);
 
-    SwingUtilities.invokeLater(Launcher::createUI);
-
-    if(CliArg.NON_ARG_PARAM.isDefined())
+    SwingUtilities.invokeLater(() ->
     {
-      SwingUtilities.invokeLater(Launcher::loadGamefile);
-    }
+      Launcher.createUI();
+      if(CliArg.NON_ARG_PARAM.isDefined())
+      {
+        SwingUtilities.invokeLater(Launcher::loadGamefile);
+      }
+      else
+      {
+        game.initRandom();
+      }
+    });
+
   }
 
   private static void loadGamefile()
