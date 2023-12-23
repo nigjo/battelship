@@ -90,6 +90,9 @@ public class LoadGameAction extends ActionBase
       }
       else
       {
+        KeyManager opponent = new KeyManager(player2key);
+        game.putData(KeyManager.KEY_MANAGER_OPPONENT, opponent);
+
         //TODO:savegame.playbackTo(gamedata, km, 1);
         boolean hasPlacedShipsForPlayer2 =
             savegame.records(2, Savegame.Record.BOARD)
@@ -97,8 +100,13 @@ public class LoadGameAction extends ActionBase
         if(!hasPlacedShipsForPlayer2)
         {
           StatusLine.getDefault().setText("Spieler 2 noch nicht bereit.");
+          game.updateState(BattleshipGame.STATE_WAIT_START);
         }
-        game.updateState(BattleshipGame.STATE_WAIT_START);
+        else
+        {
+          //TODO:savegame.playbackTo(gamedata, km, 2);
+          game.updateState(BattleshipGame.STATE_ATTACK);
+        }
       }
     }
     else
@@ -148,7 +156,6 @@ public class LoadGameAction extends ActionBase
     {
       String encodedBoard =
           savegame.records(player, Savegame.Record.BOARD)
-              .peek(r -> System.out.println(r.getKind()))
               .findFirst()
               .orElseThrow()
               .getPayload();
