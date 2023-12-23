@@ -15,6 +15,7 @@
  */
 package de.nigjo.battleship;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 import java.awt.BorderLayout;
@@ -30,6 +31,7 @@ import de.nigjo.battleship.ui.DialogDisplayer;
 import de.nigjo.battleship.ui.GameBoard;
 import de.nigjo.battleship.ui.StatusLine;
 import de.nigjo.battleship.ui.SwingDisplayer;
+import de.nigjo.battleship.ui.actions.LoadGameAction;
 import de.nigjo.battleship.util.Storage;
 
 /**
@@ -44,11 +46,14 @@ public class Launcher
    */
   public static void main(String[] args)
   {
+    //<editor-fold defaultstate="collapsed" desc="ensureLaF();">
     if(!GraphicsEnvironment.isHeadless())
     {
       SwingUtilities.invokeLater(Launcher::initUI);
     }
+    //</editor-fold>
 
+    //<editor-fold defaultstate="collapsed" desc="parseCommandLine();">
     try
     {
       CliArg.parse(args);
@@ -59,18 +64,60 @@ public class Launcher
       System.exit(1);
       return;
     }
+    //</editor-fold>
 
-    String idFile = CliArg.id.isDefined() ? CliArg.id.getParam() : "battleship.player.id";
-    BattleshipGame game = new BattleshipGame(Path.of(idFile));
-    Storage.getDefault().put(BattleshipGame.class.getName(), game);
-
+    //<editor-fold defaultstate="collapsed" desc="run();">
     if(CliArg.help.isDefined())
     {
       CliArg.showHelp();
     }
+    else if(!GraphicsEnvironment.isHeadless())
+    {
+      initializeGameUI();
+    }
     else
     {
-      SwingUtilities.invokeLater(Launcher::createUI);
+      CliArg.showError("Spiel kann nicht ohne UI starten.");
+      System.exit(2);
+    }
+    //</editor-fold>
+  }
+
+  private static void initializeGameUI()
+  {
+    String idFileName =
+        CliArg.id.isDefined() ? CliArg.id.getParam() : "battleship.player.id";
+
+    BattleshipGame game = new BattleshipGame(Path.of(idFileName));
+    game.initRandom();
+    game.updateState(BattleshipGame.STATE_FINISHED);
+
+    Storage.getDefault().put(BattleshipGame.class.getName(), game);
+
+    SwingUtilities.invokeLater(Launcher::createUI);
+
+    if(CliArg.NON_ARG_PARAM.isDefined())
+    {
+      SwingUtilities.invokeLater(Launcher::loadGamefile);
+    }
+  }
+
+  private static void loadGamefile()
+  {
+    try
+    {
+      LoadGameAction.loadGame(Path.of(CliArg.NON_ARG_PARAM.getParam()));
+    }
+    catch(RuntimeException ex)
+    {
+      StatusLine.getDefault().setText(
+          ex.getClass().getSimpleName()
+          + ": " + ex.getLocalizedMessage());
+      ex.printStackTrace(System.err);
+    }
+    catch(IOException ex)
+    {
+      StatusLine.getDefault().setText("FEHLER: " + ex.getLocalizedMessage());
     }
   }
 
