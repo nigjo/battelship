@@ -94,7 +94,7 @@ public class ActionsManager
     {
       return Collections.emptyList();
     }
-    return new ArrayList(pathActions.values());
+    return new ArrayList<>(pathActions.values());
   }
 
   public List<Action> getContextActions(String path, Object context)
