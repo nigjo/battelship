@@ -15,13 +15,17 @@
  */
 package de.nigjo.battleship;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Random;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.KeyManager;
@@ -34,13 +38,15 @@ import de.nigjo.battleship.util.Storage;
 public final class BattleshipGame
 {
   private final Storage gamedata;
+  private final Consumer<Runnable> stateChangeRunner;
   public static final String KEY_PLAYER_NUM = "BattleshipGame.player";
   public static final String KEY_STATE = "BattleshipGame.gamestate";
   public static final String STATE_PLACEMENT = "BattleshipGame.gamestate.placement";
   public static final String STATE_WAIT_START = "BattleshipGame.gamestate.waitForStart";
+  public static final String STATE_ATTACK = "BattleshipGame.gamestate.doAttack";
+  public static final String STATE_WAIT_ATTACK = "BattleshipGame.gamestate.waitForAttack";
   public static final String STATE_WAIT_RESPONSE =
       "BattleshipGame.gamestate.waitForResult";
-  public static final String STATE_WAIT_ATTACK = "BattleshipGame.gamestate.waitForAttack";
   public static final String STATE_FINISHED = "BattleshipGame.gamestate.endOfGame";
 
   public static final class Config
@@ -67,6 +73,11 @@ public final class BattleshipGame
 
   public BattleshipGame(Path playerId)
   {
+    this(playerId, Runnable::run);
+  }
+
+  public BattleshipGame(Path playerId, Consumer<Runnable> stateChangeRunner)
+  {
     this.gamedata = new Storage();
     gamedata.put(KeyManager.KEY_MANAGER_SELF, new KeyManager(playerId));
     setConfig("size", "10");
@@ -80,6 +91,10 @@ public final class BattleshipGame
 
     //just run-test the keymanager
     validateKeyManager();
+
+    gamedata.addPropertyChangeListener(KEY_STATE, this::stateObserver);
+
+    this.stateChangeRunner = stateChangeRunner;
   }
 
   public void setConfig(String key, String value)
@@ -232,7 +247,57 @@ public final class BattleshipGame
 
   public void updateState(String state)
   {
-    gamedata.put(BattleshipGame.KEY_STATE, state);
+    stateChangeRunner.accept(() -> gamedata.put(BattleshipGame.KEY_STATE, state));
+  }
+
+  private void stateObserver(PropertyChangeEvent pce)
+  {
+    Object stateValue = pce.getNewValue();
+    Logger.getLogger(BattleshipGame.class.getName()).log(Level.INFO,
+        "next state: {0}", stateValue);
+    if(!(stateValue instanceof String))
+    {
+      return;
+    }
+    switch((String)stateValue)
+    {
+      case "BattleshipGame.gamestate.init":
+        break;
+      case STATE_PLACEMENT:
+        //Es wird darauf gewartet dass die eigenen Schiffe platziert sind.
+        // Wird in ShipsPlacer behandelt.
+        break;
+      case STATE_WAIT_START:
+        //Lokal sind die Schiffe platziert.
+        //Pruefen, ob beide Spieler ein "volles" Brett haben.
+        if(gamedata.get(BoardData.KEY_SELF, BoardData.class).hasShips()
+            && gamedata.get(BoardData.KEY_OPPONENT, BoardData.class).hasShips())
+        {
+          if(getDataInt(KEY_PLAYER_NUM, 0) == 1)
+          {
+            updateState(STATE_ATTACK);
+          }
+          else
+          {
+            updateState(STATE_WAIT_ATTACK);
+          }
+        }
+        break;
+      case STATE_ATTACK:
+        //Es soll ein Schuss erfolgen.
+        //Wird in AttackSelection behandelt.
+        break;
+      case STATE_WAIT_ATTACK:
+        //Warten auf einen Schuss
+        //TODO: Ergebnis pruefen -> Selber oder nochmal warten.
+        //TODO: Alle Schiffe getroffen? -> Ende
+        break;
+      case STATE_WAIT_RESPONSE:
+        //Schuss ist erfolgt. Warten auf das Ergebnis
+        //TODO: Ergebnis pruefen -> Nochmal Schuss oder warten auf Gegener.
+        //TODO: Alle Schiffe getroffen? -> Ende
+        break;
+    }
   }
 
 }
