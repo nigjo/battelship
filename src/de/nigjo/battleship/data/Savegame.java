@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -41,14 +42,18 @@ public class Savegame
   public static Savegame createNew(int... ships)
   {
     Savegame game = new Savegame();
-    game.addRecord(new Record(Record.VERSION, 1, "0"));
-    String shipsList = IntStream.of(ships)
-        .boxed()
+    game.addRecord(Record.VERSION, 1, "0");
+    String shipsList = IntStream.of(ships).boxed()
         .reduce((String)null,
             (s, i) -> s == null ? ("" + i) : (s + "," + i),
             (a, s) -> a + "," + s);
-    game.addRecord(new Record(Record.SHIPS, 1, shipsList));
+    game.setConfig("ships", shipsList);
     return game;
+  }
+
+  public void addRecord(String kind, int playernum, String payload)
+  {
+    addRecord(new Record(kind, playernum, payload));
   }
 
   public void addRecord(Record record)
@@ -59,6 +64,11 @@ public class Savegame
       throw new IllegalArgumentException("invalid player number " + record.getPlayerid());
     }
     this.records.add(record);
+    store();
+  }
+
+  private void store() throws UncheckedIOException
+  {
     if(filename != null)
     {
       try
@@ -77,6 +87,33 @@ public class Savegame
     return this.records.stream()
         .filter(r -> r.getPlayerid() == player)
         .filter(r -> kind.equals(r.getKind()));
+  }
+
+  public void setConfig(String key, String value)
+  {
+    records(1, Savegame.Record.CONFIG)
+        .filter(r -> r.getPayload().startsWith(key + "="))
+        .findFirst()
+        .ifPresentOrElse(record ->
+        {
+          Record replacement = new Record(Record.CONFIG, 1, key + "=" + value);
+          int pos = records.indexOf(record);
+          records.add(pos, replacement);
+          records.remove(pos + 1);
+          store();
+        }, () ->
+        {
+          addRecord(new Record(Record.CONFIG, 1, key + "=" + value));
+        });
+  }
+
+  public Optional<String> getConfig(String key)
+  {
+    return records(1, Savegame.Record.CONFIG)
+        .filter(r -> r.getPayload().startsWith(key + "="))
+        .findFirst()
+        .map(r -> r.getPayload())
+        .map(p -> p.substring(p.indexOf('=') + 1));
   }
 
   public static Savegame readFromFile(Path savegameFile) throws IOException
@@ -192,7 +229,7 @@ public class Savegame
      * Unencrypted list of used ships. Must be defined by player 1 and has to exist
      * exactly once in a savegame.
      */
-    public static final String SHIPS = "SHIPS";
+    public static final String CONFIG = "CONFIG";
     /**
      * Encrypted board of a player. Each player stores its own board with its own public
      * key. So the player itself can decrpyt only its own board.
@@ -205,7 +242,7 @@ public class Savegame
     private final int playerid;
     private final String payload;
 
-    public Record(String kind, int playerid, String payload)
+    private Record(String kind, int playerid, String payload)
     {
       this.kind = kind;
       this.playerid = playerid;

@@ -113,10 +113,9 @@ public class ShipsPlacer implements Painter<BoardData>
     if(source instanceof Storage)
     {
       Savegame savegame = ((Storage)source).get(Savegame.class);
-      ships = savegame.records(1, Savegame.Record.SHIPS)
-          .findFirst().stream()
-          .map(r -> r.getPayload())
-          .flatMap(s -> Arrays.stream(s.split(",")))
+      ships = savegame.getConfig("ships").stream()
+          .map(s -> s.split(","))
+          .flatMap(Arrays::stream)
           .mapToInt(Integer::parseInt)
           .toArray();
       currentShip = 0;
@@ -146,8 +145,7 @@ public class ShipsPlacer implements Painter<BoardData>
                 KeyManager km = s.get(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
                 String playload = km.encode(board.toString());
                 s.get(Savegame.class)
-                    .addRecord(new Savegame.Record(
-                        Savegame.Record.BOARD, currentPlayer, playload));
+                    .addRecord(Savegame.Record.BOARD, currentPlayer, playload);
                 s.put(BattleshipGame.KEY_STATE, BattleshipGame.STATE_WAIT_START);
               });
         }

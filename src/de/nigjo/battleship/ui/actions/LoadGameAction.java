@@ -105,8 +105,7 @@ public class LoadGameAction extends ActionBase
         gamedata.put(BattleshipGame.KEY_PLAYER_NUM, 2);
         //nur Spieler 1 vorhanden. Spieler 2 (wir) am Zug
         BattleshipGame.clearBoards(gamedata, 10);
-        savegame.addRecord(
-            new Savegame.Record(Savegame.Record.PLAYER, 2, km.getPublicKey()));
+        savegame.addRecord(Savegame.Record.PLAYER, 2, km.getPublicKey());
         BattleshipGame.updateState(gamedata, BattleshipGame.STATE_PLACEMENT);
       }
       else if(player2key.equals(km.getPublicKey()))

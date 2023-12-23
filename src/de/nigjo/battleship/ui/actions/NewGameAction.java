@@ -101,8 +101,7 @@ public class NewGameAction extends ActionBase
       int size, int... ships)
   {
     Savegame savegame = Savegame.createNew(ships);
-    savegame.addRecord(
-        new Savegame.Record(Savegame.Record.PLAYER, 1, km.getPublicKey()));
+    savegame.addRecord(Savegame.Record.PLAYER, 1, km.getPublicKey());
     try
     {
       savegame.storeToFile(savegameFile);
