@@ -82,6 +82,7 @@ public class LoadGameAction extends ActionBase
     if(player1key.equals(km.getPublicKey()))
     {
       StatusLine.getDefault().setText("Willkommen Spieler 1");
+      gamedata.put(BattleshipGame.KEY_PLAYER_NUM, 1);
       loadBoardForPlayer(1, savegame, km, gamedata);
       if(player2key == null)
       {
@@ -101,6 +102,7 @@ public class LoadGameAction extends ActionBase
       {
         //Noch kein Playerkey. Wir sind Spieler 2
         StatusLine.getDefault().setText("Willkommen Spieler 2");
+        gamedata.put(BattleshipGame.KEY_PLAYER_NUM, 2);
         //nur Spieler 1 vorhanden. Spieler 2 (wir) am Zug
         BattleshipGame.clearBoards(gamedata, 10);
         savegame.addRecord(
@@ -111,6 +113,7 @@ public class LoadGameAction extends ActionBase
       {
         //Wir sind dem Spiel bereits beigetreten.
         StatusLine.getDefault().setText("Willkommen Spieler 2");
+        gamedata.put(BattleshipGame.KEY_PLAYER_NUM, 2);
         if(!loadBoardForPlayer(2, savegame, km, gamedata))
         {
           // noch keine Schiffe platziert. Wir sind dran.
