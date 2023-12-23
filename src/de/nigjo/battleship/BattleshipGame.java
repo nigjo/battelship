@@ -115,4 +115,14 @@ public class BattleshipGame
     gamedata.put(BoardData.KEY_OPPONENT, opponent);
   }
 
+  public static void updateState(Storage gamedata, String state)
+  {
+    gamedata.put(BattleshipGame.KEY_STATE, state);
+  }
+
+  public void updateState(String state)
+  {
+    updateState(getGamedata(), state);
+  }
+
 }
