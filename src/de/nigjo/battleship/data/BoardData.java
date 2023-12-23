@@ -29,7 +29,7 @@ public class BoardData
   public static final int[] GAME_CLASSIC = mkgame(5, 4, 4, 3, 3, 3, 2, 2, 2, 2);
   public static final int[] GAME_SIMPLE = mkgame(5, 4, 3, 3, 2);
   //                                    012345678901234567890123456789
-  private static final char[] STATUS = ".-WwEeHh.-NnSsVv".toCharArray();
+  private static final char[] STATUS = ".-WwEeHh?-NnSsVv".toCharArray();
   public static final int UNKNOWN = 0;
   public static final int SHOOTED_AT = 1; //=1
   public static final int SHIP_START = 1 << 1;
@@ -129,12 +129,8 @@ public class BoardData
 
   public boolean shootAt(int x, int y)
   {
-    if(!hasShips)
-    {
-      throw new IllegalStateException("this is not your own board");
-    }
     active = true;
-    board[y * size + x] &= SHOOTED_AT;
+    board[y * size + x] &= hasShips ? VERTICAL : SHOOTED_AT;
 
     return (board[y * size + x] & SHIP) > 0;
   }
@@ -212,6 +208,11 @@ public class BoardData
   public boolean isOpponent()
   {
     return opponent;
+  }
+
+  public boolean hasShips()
+  {
+    return hasShips;
   }
 
 }
