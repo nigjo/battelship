@@ -18,6 +18,7 @@ package de.nigjo.battleship.ui.actions;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -80,32 +81,42 @@ public class NewGameAction extends ActionBase
       lastFolder = savegameFile.getParentFile();
       if(savegameFile.exists())
       {
-        if(JOptionPane.YES_OPTION != DialogDisplayer.getDefault()
+        int answer = DialogDisplayer.getDefault()
             .showQuestion(getName(),
-                "Die Spielstanddatei existiert bereit. Soll die Datei überschrieben werden?"))
+                "Die Spielstanddatei existiert bereit. Soll die Datei überschrieben werden?");
+        if(JOptionPane.YES_OPTION == answer)
         {
-          return;
+          createNewGame(savegameFile.toPath(), gamedata, km, 10, BoardData.GAME_SIMPLE);
         }
       }
-      Savegame savegame = Savegame.createNew(BoardData.GAME_SIMPLE);
-      savegame.addRecord(
-          new Savegame.Record(Savegame.Record.PLAYER, 1, km.getPublicKey()));
-      try
+      else
       {
-        savegame.storeToFile(savegameFile.toPath());
-
-        BattleshipGame.clearBoards(gamedata, 10);
-
-        gamedata.put(Savegame.class.getName(), savegame);
-        gamedata.put(BattleshipGame.KEY_PLAYER_NUM, 1);
-        BattleshipGame.updateState(gamedata, BattleshipGame.STATE_PLACEMENT);
-      }
-      catch(IOException ex)
-      {
-        throw new UncheckedIOException(ex);
+        createNewGame(savegameFile.toPath(), gamedata, km, 10, BoardData.GAME_SIMPLE);
       }
     }
+  }
 
+  public static void createNewGame(Path savegameFile,
+      Storage gamedata, KeyManager km,
+      int size, int... ships)
+  {
+    Savegame savegame = Savegame.createNew(ships);
+    savegame.addRecord(
+        new Savegame.Record(Savegame.Record.PLAYER, 1, km.getPublicKey()));
+    try
+    {
+      savegame.storeToFile(savegameFile);
+      gamedata.put(Savegame.class.getName(), savegame);
+
+      BattleshipGame.clearBoards(gamedata, size);
+      gamedata.put(BattleshipGame.KEY_PLAYER_NUM, 1);
+
+      BattleshipGame.updateState(gamedata, BattleshipGame.STATE_PLACEMENT);
+    }
+    catch(IOException ex)
+    {
+      throw new UncheckedIOException(ex);
+    }
   }
 
   @Override
