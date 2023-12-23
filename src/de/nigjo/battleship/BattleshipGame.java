@@ -102,10 +102,15 @@ public class BattleshipGame
 
   public void initRandom(long seed)
   {
+    initRandom(seed, 10, BoardData.GAME_SIMPLE);
+  }
+
+  public void initRandom(long seed, int size, int... ships)
+  {
     Random rnd = new Random(seed);
-    BoardData own = BoardData.generateRandom(10, rnd, BoardData.GAME_SIMPLE);
+    BoardData own = BoardData.generateRandom(size, rnd, ships);
     gamedata.put(BoardData.KEY_SELF, own);
-    BoardData opponent = BoardData.generateRandom(10, rnd, BoardData.GAME_SIMPLE);
+    BoardData opponent = BoardData.generateRandom(size, rnd, ships);
     opponent.setOpponent(true);
     gamedata.put(BoardData.KEY_OPPONENT, opponent);
   }
