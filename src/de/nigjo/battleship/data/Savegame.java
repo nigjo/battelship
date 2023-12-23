@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -31,6 +30,8 @@ import java.util.stream.Stream;
  */
 public class Savegame
 {
+  private static final String CURRENT_VERSION = "0";
+
   private final List<Record> records;
   private Path filename;
 
@@ -39,15 +40,15 @@ public class Savegame
     records = new ArrayList<>();
   }
 
-  public static Savegame createNew(int... ships)
+  public static Savegame createNew()
   {
     Savegame game = new Savegame();
-    game.addRecord(Record.VERSION, 1, "0");
-    String shipsList = IntStream.of(ships).boxed()
-        .reduce((String)null,
-            (s, i) -> s == null ? ("" + i) : (s + "," + i),
-            (a, s) -> a + "," + s);
-    game.setConfig("ships", shipsList);
+    game.addRecord(Record.VERSION, 1, CURRENT_VERSION);
+//    String shipsList = IntStream.of(ships).boxed()
+//        .reduce((String)null,
+//            (s, i) -> s == null ? ("" + i) : (s + "," + i),
+//            (a, s) -> a + "," + s);
+//    game.setConfig("ships", shipsList);
     return game;
   }
 

@@ -26,8 +26,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
 
+import de.nigjo.battleship.BattleshipGame;
 import de.nigjo.battleship.data.BoardData;
-import de.nigjo.battleship.util.Storage;
 
 /**
  *
@@ -35,7 +35,7 @@ import de.nigjo.battleship.util.Storage;
  */
 public class GameBoard extends JPanel
 {
-  public GameBoard(Storage gamedata)
+  public GameBoard(BattleshipGame game)
   {
     super(new BorderLayout());
     setBackground(Color.ORANGE);
@@ -62,16 +62,16 @@ public class GameBoard extends JPanel
     add(toolbar, BorderLayout.PAGE_START);
 
     JPanel players = new JPanel(new GridLayout(1, 2, 16, 4));
-    players.add(createPlayerSide(gamedata, BoardData.KEY_SELF));
-    players.add(createPlayerSide(gamedata, BoardData.KEY_OPPONENT));
+    players.add(createPlayerSide(game, BoardData.KEY_SELF));
+    players.add(createPlayerSide(game, BoardData.KEY_OPPONENT));
     add(players, BorderLayout.CENTER);
   }
 
-  private static JPanel createPlayerSide(Storage gamedata, String boardkey)
+  private static JPanel createPlayerSide(BattleshipGame game, String boardkey)
   {
     JPanel playerBoard = new JPanel(new BorderLayout(2, 4));
 
-    BoardData playerData = gamedata.get(boardkey, BoardData.class);
+    BoardData playerData = game.getData(boardkey, BoardData.class);
 
     playerBoard.add(
         new JLabel(playerData.isOpponent() ? "Gegnergebiet" : "Eigene Schiffe"),
@@ -81,7 +81,7 @@ public class GameBoard extends JPanel
     OceanBoard ocean = new OceanBoard(playerData);
     playerBoard.add(ocean, BorderLayout.CENTER);
 
-    gamedata.addPropertyChangeListener(boardkey,
+    game.addPropertyChangeListener(boardkey,
         pce -> ocean.updateBoard((BoardData)pce.getNewValue())
     );
 

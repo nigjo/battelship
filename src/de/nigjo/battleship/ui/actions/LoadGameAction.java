@@ -61,14 +61,12 @@ public class LoadGameAction extends ActionBase
 
   public static void loadGame(Path saveGameFile) throws IOException
   {
-    Storage gamedata =
+    BattleshipGame game =
         Storage.getDefault().find(BattleshipGame.class)
-            .map(BattleshipGame::getGamedata)
             .orElseThrow();
-    KeyManager km = gamedata.get(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
 
     Savegame savegame = Savegame.readFromFile(saveGameFile);
-    gamedata.put(Savegame.class.getName(), savegame);
+    game.putData(Savegame.class.getName(), savegame);
 
     String player1key =
         savegame.records(1, Savegame.Record.PLAYER)
@@ -79,11 +77,13 @@ public class LoadGameAction extends ActionBase
             .findFirst()
             .map(Savegame.Record::getPayload)
             .orElse(null);
+
+    KeyManager km = game.getData(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
     if(player1key.equals(km.getPublicKey()))
     {
       StatusLine.getDefault().setText("Willkommen Spieler 1");
-      gamedata.put(BattleshipGame.KEY_PLAYER_NUM, 1);
-      loadBoardForPlayer(1, savegame, km, gamedata);
+      game.putData(BattleshipGame.KEY_PLAYER_NUM, 1);
+      loadBoardForPlayer(1, savegame, km, game);
       if(player2key == null)
       {
         StatusLine.getDefault().setText("Warte auf Spieler 2");
@@ -91,49 +91,58 @@ public class LoadGameAction extends ActionBase
       else
       {
         //TODO:savegame.playbackTo(gamedata, km, 1);
+        boolean hasPlacedShipsForPlayer2 =
+            savegame.records(2, Savegame.Record.BOARD)
+                .findFirst().isPresent();
+        if(!hasPlacedShipsForPlayer2)
+        {
+          StatusLine.getDefault().setText("Spieler 2 noch nicht bereit.");
+        }
+        game.updateState(BattleshipGame.STATE_WAIT_START);
       }
     }
     else
     {
       KeyManager opponent = new KeyManager(player1key);
-      gamedata.put(KeyManager.KEY_MANAGER_OPPONENT, opponent);
+      game.putData(KeyManager.KEY_MANAGER_OPPONENT, opponent);
 
       if(player2key == null)
       {
         //Noch kein Playerkey. Wir sind Spieler 2
         StatusLine.getDefault().setText("Willkommen Spieler 2");
-        gamedata.put(BattleshipGame.KEY_PLAYER_NUM, 2);
+        game.putData(BattleshipGame.KEY_PLAYER_NUM, 2);
         //nur Spieler 1 vorhanden. Spieler 2 (wir) am Zug
-        BattleshipGame.clearBoards(gamedata, 10);
+        game.clearBoards();
         savegame.addRecord(Savegame.Record.PLAYER, 2, km.getPublicKey());
-        BattleshipGame.updateState(gamedata, BattleshipGame.STATE_PLACEMENT);
+        game.updateState(BattleshipGame.STATE_PLACEMENT);
       }
       else if(player2key.equals(km.getPublicKey()))
       {
         //Wir sind dem Spiel bereits beigetreten.
         StatusLine.getDefault().setText("Willkommen Spieler 2");
-        gamedata.put(BattleshipGame.KEY_PLAYER_NUM, 2);
-        if(!loadBoardForPlayer(2, savegame, km, gamedata))
+        game.putData(BattleshipGame.KEY_PLAYER_NUM, 2);
+        if(!loadBoardForPlayer(2, savegame, km, game))
         {
           // noch keine Schiffe platziert. Wir sind dran.
-          BattleshipGame.clearBoards(gamedata, 10);
-          BattleshipGame.updateState(gamedata, BattleshipGame.STATE_PLACEMENT);
+          game.clearBoards();
+          game.updateState(BattleshipGame.STATE_PLACEMENT);
         }
         else
         {
           //TODO:savegame.playbackTo(gamedata, km, 2);
+          game.updateState(BattleshipGame.STATE_WAIT_ATTACK);
         }
       }
       else
       {
         StatusLine.getDefault().setText("Das Spiel hat bereits 2 Spieler.");
-        BattleshipGame.clearBoards(gamedata, 10);
+        game.clearBoards();
       }
     }
   }
 
   private static boolean loadBoardForPlayer(int player,
-      Savegame savegame, KeyManager km, Storage gamedata)
+      Savegame savegame, KeyManager km, BattleshipGame game)
   {
     try
     {
@@ -150,7 +159,7 @@ public class LoadGameAction extends ActionBase
             "board data for player " + player + " could not be decoded");
       }
       BoardData parsed = BoardData.parse(boarddata);
-      gamedata.put(BoardData.KEY_SELF, parsed);
+      game.putData(BoardData.KEY_SELF, parsed);
     }
     catch(NoSuchElementException noboard)
     {
@@ -158,9 +167,9 @@ public class LoadGameAction extends ActionBase
     }
 
     //2.Board ist anfangs immer "leer".
-    BattleshipGame.clearBoard(gamedata, 10, true);
+    game.clearBoard(true);
 
-    gamedata.put(BattleshipGame.KEY_PLAYER_NUM, player);
+    game.putData(BattleshipGame.KEY_PLAYER_NUM, player);
     return true;
   }
 

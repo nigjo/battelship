@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,7 +32,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
 import de.nigjo.battleship.BattleshipGame;
-import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.KeyManager;
 import de.nigjo.battleship.data.Savegame;
 import de.nigjo.battleship.ui.ActionBase;
@@ -52,12 +53,10 @@ public class NewGameAction extends ActionBase
   {
     try
     {
-      Storage gamedata =
+      BattleshipGame game =
           Storage.getDefault().find(BattleshipGame.class)
-              .map(BattleshipGame::getGamedata)
               .orElseThrow();
-      KeyManager km = gamedata.get(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
-      createNewGame(gamedata, km);
+      createNewGame(game);
     }
     catch(IllegalStateException ex)
     {
@@ -72,7 +71,7 @@ public class NewGameAction extends ActionBase
     }
   }
 
-  private void createNewGame(Storage gamedata, KeyManager km)
+  private void createNewGame(BattleshipGame game)
   {
     JFileChooser chooser = new JFileChooser(lastFolder);
     if(JFileChooser.APPROVE_OPTION == chooser.showSaveDialog(ActionsManager.getFrame()))
@@ -86,31 +85,36 @@ public class NewGameAction extends ActionBase
                 "Die Spielstanddatei existiert bereit. Soll die Datei überschrieben werden?");
         if(JOptionPane.YES_OPTION == answer)
         {
-          createNewGame(savegameFile.toPath(), gamedata, km, 10, BoardData.GAME_SIMPLE);
+          createNewGame(savegameFile.toPath(), game);
         }
       }
       else
       {
-        createNewGame(savegameFile.toPath(), gamedata, km, 10, BoardData.GAME_SIMPLE);
+        createNewGame(savegameFile.toPath(), game);
       }
     }
   }
 
-  public static void createNewGame(Path savegameFile,
-      Storage gamedata, KeyManager km,
-      int size, int... ships)
+  public static void createNewGame(Path savegameFile, BattleshipGame game)
   {
-    Savegame savegame = Savegame.createNew(ships);
+    Savegame savegame = Savegame.createNew();
+
+    Map<String, String> orderedConfig = new TreeMap<>();
+    game.getAllData(BattleshipGame.Config.class)
+        .forEach(cfg -> orderedConfig.put(cfg.getKey(), cfg.getValue()));
+    orderedConfig.forEach(savegame::setConfig);
+
+    KeyManager km = game.getData(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
     savegame.addRecord(Savegame.Record.PLAYER, 1, km.getPublicKey());
     try
     {
       savegame.storeToFile(savegameFile);
-      gamedata.put(Savegame.class.getName(), savegame);
+      game.putData(Savegame.class.getName(), savegame);
 
-      BattleshipGame.clearBoards(gamedata, size);
-      gamedata.put(BattleshipGame.KEY_PLAYER_NUM, 1);
+      game.clearBoards();
+      game.putData(BattleshipGame.KEY_PLAYER_NUM, 1);
 
-      BattleshipGame.updateState(gamedata, BattleshipGame.STATE_PLACEMENT);
+      game.updateState(BattleshipGame.STATE_PLACEMENT);
     }
     catch(IOException ex)
     {

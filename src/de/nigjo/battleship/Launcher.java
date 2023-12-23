@@ -144,7 +144,7 @@ public class Launcher
     BattleshipGame game =
         Storage.getDefault().get(BattleshipGame.class.getName(), BattleshipGame.class);
 
-    frame.getContentPane().add(new GameBoard(game.getGamedata()));
+    frame.getContentPane().add(new GameBoard(game));
     frame.getContentPane().add(StatusLine.getDefault(), BorderLayout.PAGE_END);
 
     JMenuBar menu = new JMenuBar();

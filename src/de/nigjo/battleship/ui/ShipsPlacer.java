@@ -61,13 +61,12 @@ public class ShipsPlacer implements Painter<BoardData>
     {
       return;
     }
-    Storage gamedata =
+    BattleshipGame game =
         Storage.getDefault().find(BattleshipGame.class)
-            .map(BattleshipGame::getGamedata)
             .orElseThrow();
-    gamedata.addPropertyChangeListener(BattleshipGame.KEY_STATE,
+    game.addPropertyChangeListener(BattleshipGame.KEY_STATE,
         pce -> checkGameState(pce.getSource(), pce.getNewValue()));
-    currentPlayer = gamedata.getInt(BattleshipGame.KEY_PLAYER_NUM, 0);
+    currentPlayer = game.getDataInt(BattleshipGame.KEY_PLAYER_NUM, 0);
     MouseInputAdapter mia = new MouseInputAdapter()
     {
       boolean inside = false;
@@ -139,14 +138,13 @@ public class ShipsPlacer implements Painter<BoardData>
         {
           active = false;
           Storage.getDefault().find(BattleshipGame.class)
-              .map(BattleshipGame::getGamedata)
-              .ifPresent(s ->
+              .ifPresent(g ->
               {
-                KeyManager km = s.get(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
+                KeyManager km = g.getData(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
                 String playload = km.encode(board.toString());
-                s.get(Savegame.class)
+                g.getData(Savegame.class)
                     .addRecord(Savegame.Record.BOARD, currentPlayer, playload);
-                s.put(BattleshipGame.KEY_STATE, BattleshipGame.STATE_WAIT_START);
+                g.putData(BattleshipGame.KEY_STATE, BattleshipGame.STATE_WAIT_START);
               });
         }
 
