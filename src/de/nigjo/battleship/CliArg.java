@@ -21,6 +21,7 @@ import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import java.awt.GraphicsEnvironment;
+import java.awt.HeadlessException;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -233,9 +234,14 @@ public enum CliArg
 
   public static void showError(IllegalArgumentException ex)
   {
+    showError(ex.getLocalizedMessage());
+  }
+
+  public static void showError(String message) throws HeadlessException
+  {
     if(!GraphicsEnvironment.isHeadless())
     {
-      JOptionPane.showMessageDialog(null, ex.getLocalizedMessage(),
+      JOptionPane.showMessageDialog(null, message,
           "Battleship", JOptionPane.ERROR_MESSAGE);
     }
     else
@@ -243,13 +249,12 @@ public enum CliArg
       Console console = System.console();
       if(console != null)
       {
-        console.writer().println(ex.getLocalizedMessage());
+        console.writer().println(message);
       }
       else
       {
-        System.err.println(ex.getLocalizedMessage());
+        System.err.println(message);
       }
     }
-
   }
 }
