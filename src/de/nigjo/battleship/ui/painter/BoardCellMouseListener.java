@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.nigjo.battleship.ui;
+package de.nigjo.battleship.ui.painter;
 
 import java.util.function.Consumer;
 

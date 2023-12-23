@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.nigjo.battleship.ui;
+package de.nigjo.battleship.ui.painter;
 
 import java.util.Arrays;
-import java.util.function.Supplier;
 
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
@@ -30,9 +30,8 @@ import de.nigjo.battleship.BattleshipGame;
 import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.KeyManager;
 import de.nigjo.battleship.data.Savegame;
-import static de.nigjo.battleship.ui.OceanBoard.getGridSize;
-import static de.nigjo.battleship.ui.OceanBoard.getGridStartX;
-import static de.nigjo.battleship.ui.OceanBoard.getGridStartY;
+import de.nigjo.battleship.ui.OceanBoard;
+import de.nigjo.battleship.ui.StatusLine;
 import de.nigjo.battleship.util.Storage;
 
 /**
@@ -45,9 +44,15 @@ public class ShipsPlacer extends InteractivePainter
   private int currentShip;
   private int[] ships;
 
-  public ShipsPlacer(JComponent context, Supplier<BoardData> boarddata)
+  public ShipsPlacer()
   {
-    super(context, boarddata);
+    super();
+  }
+
+  @Override
+  public int getPosition()
+  {
+    return 5000;
   }
 
   @Override
@@ -55,7 +60,7 @@ public class ShipsPlacer extends InteractivePainter
   {
     if(BattleshipGame.STATE_PLACEMENT.equals(state))
     {
-      boolean opponent = getBoarddata()
+      boolean opponent = getBoard()
           .map(BoardData::isOpponent)
           .orElse(true);
 
@@ -80,7 +85,7 @@ public class ShipsPlacer extends InteractivePainter
     }
     try
     {
-      BoardData board = getBoarddata().orElseThrow();
+      BoardData board = getBoard().orElseThrow();
       board.placeShip(currentShip, validLocation.x, validLocation.y,
           ships[currentShip], vertical);
       ++currentShip;
@@ -116,26 +121,24 @@ public class ShipsPlacer extends InteractivePainter
   protected void updateCellLocation(MouseEvent e)
   {
     super.updateCellLocation(e);
-    vertical = MouseEvent.SHIFT_DOWN_MASK == (e.getModifiersEx()
-        & MouseEvent.SHIFT_DOWN_MASK);
+    if(e != null)
+    {
+      vertical = MouseEvent.SHIFT_DOWN_MASK == (e.getModifiersEx()
+          & MouseEvent.SHIFT_DOWN_MASK);
+    }
   }
 
   @Override
-  public void paint(Graphics2D g, BoardData data, int width, int height)
+  public void paint(Graphics2D g, OceanBoard.Data data)
   {
-    if(!isActive())
-    {
-      return;
-    }
+    int cellSize = data.getCellSize();
+    int offX = data.getOffsetX() + cellSize;
+    int offY = data.getOffsetY() + cellSize;
 
     Graphics2D work = (Graphics2D)g.create();
-    int cellSize = getGridSize(data, width, height);
-    int borderWidth = cellSize / 2;
-    int offX = getGridStartX(width, height) + cellSize + borderWidth;
-    int offY = getGridStartY(width, height) + cellSize + borderWidth;
 
-    Point currentCell = updateCellLocation(data, width, height,
-        (x, y) -> (vertical ? y : x) + ships[currentShip] <= data.getSize());
+    Point currentCell = updateCellLocation(data,
+        (x, y) -> (vertical ? y : x) + ships[currentShip] <= data.getBoard().getSize());
     if(currentCell != null)
     {
       work.setColor(new Color(192, 224, 255, 64));
@@ -149,10 +152,19 @@ public class ShipsPlacer extends InteractivePainter
     }
 
     String msg = "Vertikale Positionierung mit Shift";
-    work.setColor(UIManager.getColor("textText"));
-    work.drawString(msg, offX, offY + cellSize * (data.getSize()) + cellSize * 2 / 5);
+    writeMessage(work, data, msg);
 
     work.dispose();
+  }
+
+  private void writeMessage(Graphics2D work, OceanBoard.Data data, String msg)
+  {
+    int cellSize = data.getCellSize();
+    Graphics textOut = work.create();
+    textOut.setColor(UIManager.getColor("textText"));
+    textOut.drawString(msg, data.getOffsetX(), data.getOffsetY()
+        + cellSize * (data.getBoard().getSize()) + cellSize * 2 / 5);
+    textOut.dispose();
   }
 
 }

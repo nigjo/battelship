@@ -13,30 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.nigjo.battleship.ui;
+package de.nigjo.battleship.ui.painter;
 
 import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 
 import javax.swing.JComponent;
-import javax.swing.Painter;
 
 import de.nigjo.battleship.BattleshipGame;
 import de.nigjo.battleship.data.BoardData;
+import de.nigjo.battleship.ui.OceanBoard;
+import de.nigjo.battleship.ui.OceanBoardPainter;
 import de.nigjo.battleship.util.Storage;
 
 /**
  *
  * @author nigjo
  */
-public abstract class InteractivePainter implements Painter<BoardData>
+public abstract class InteractivePainter implements OceanBoardPainter
 {
-  private final JComponent context;
-  private final Supplier<BoardData> boarddata;
   private int currentPlayer;
 
   private BoardCellMouseListener mia;
@@ -44,12 +44,11 @@ public abstract class InteractivePainter implements Painter<BoardData>
   private boolean active;
   private Point validLocation;
   private Point lastMouseLocation;
+  private Supplier<BoardData> boardSupplier;
+  private Supplier<JComponent> uiSupplier;
 
-  protected InteractivePainter(JComponent context, Supplier<BoardData> boarddata)
+  protected InteractivePainter()
   {
-    this.context = context;
-    this.boarddata = boarddata;
-
     BattleshipGame game =
         Storage.getDefault().find(BattleshipGame.class)
             .orElseThrow();
@@ -58,7 +57,7 @@ public abstract class InteractivePainter implements Painter<BoardData>
     currentPlayer = game.getDataInt(BattleshipGame.KEY_PLAYER_NUM, 0);
   }
 
-  private void attachListener()
+  private void attachListeners(JComponent context)
   {
     if(mia != null)
     {
@@ -68,7 +67,7 @@ public abstract class InteractivePainter implements Painter<BoardData>
     mia.registerListeners(context);
   }
 
-  private void removeListeners()
+  private void removeListeners(JComponent context)
   {
     if(mia != null)
     {
@@ -77,27 +76,25 @@ public abstract class InteractivePainter implements Painter<BoardData>
     }
   }
 
-  public Optional<BoardData> getBoarddata()
+//  public Optional<BoardData> getBoarddata()
+//  {
+//    if(boarddata == null)
+//    {
+//      return Optional.empty();
+//    }
+//    return Optional.ofNullable(boarddata.get());
+//  }
+  protected Point updateCellLocation(OceanBoard.Data data)
   {
-    if(boarddata == null)
-    {
-      return Optional.empty();
-    }
-    return Optional.ofNullable(boarddata.get());
+    return updateCellLocation(data, (x, y) -> true);
   }
 
-  protected Point updateCellLocation(BoardData data, int width, int height)
-  {
-    return updateCellLocation(data, width, height, (x, y) -> true);
-  }
-
-  protected Point updateCellLocation(BoardData data, int width, int height,
+  protected Point updateCellLocation(OceanBoard.Data data,
       BiPredicate<Integer, Integer> validateCoordiantes)
   {
-    int cellSize = OceanBoard.getGridSize(data, width, height);
-    int borderWidth = cellSize / 2;
-    int offX = OceanBoard.getGridStartX(width, height) + cellSize + borderWidth;
-    int offY = OceanBoard.getGridStartY(width, height) + cellSize + borderWidth;
+    int cellSize = data.getCellSize();
+    int offX = data.getOffsetX() + cellSize;
+    int offY = data.getOffsetY() + cellSize;
 
     if(lastMouseLocation != null)
     {
@@ -125,10 +122,14 @@ public abstract class InteractivePainter implements Painter<BoardData>
     return validLocation;
   }
 
+  protected Optional<BoardData> getBoard()
+  {
+    return get(boardSupplier);
+  }
+
   protected void updateCellLocation(MouseEvent e)
   {
-    BoardData data = boarddata.get();
-    if(e == null || data == null)
+    if(e == null || get(boardSupplier).isEmpty())
     {
       lastMouseLocation = null;
     }
@@ -136,7 +137,13 @@ public abstract class InteractivePainter implements Painter<BoardData>
     {
       lastMouseLocation = e.getPoint();
     }
-    context.repaint();
+    get(uiSupplier).ifPresent(JComponent::repaint);
+  }
+
+  private <T> Optional<T> get(Supplier<T> s)
+  {
+    return Optional.ofNullable(s)
+        .map(Supplier::get);
   }
 
   abstract protected void selectCell(MouseEvent e);
@@ -150,11 +157,11 @@ public abstract class InteractivePainter implements Painter<BoardData>
       active = checkActive((Storage)source, (String)state);
       if(active)
       {
-        attachListener();
+        get(uiSupplier).ifPresent(this::attachListeners);
       }
       else
       {
-        removeListeners();
+        get(uiSupplier).ifPresent(this::removeListeners);
       }
     }
   }
@@ -165,6 +172,24 @@ public abstract class InteractivePainter implements Painter<BoardData>
   }
 
   protected abstract boolean checkActive(Storage boarddata, String state);
+
+  @Override
+  public final void paint(Graphics2D g, OceanBoard.Data data, int width, int height)
+  {
+    this.boardSupplier = data::getBoard;
+    this.uiSupplier = data::getContext;
+
+    if(!isActive())
+    {
+      return;
+    }
+
+    updateCellLocation(data);
+
+    paint(g, data);
+  }
+
+  protected abstract void paint(Graphics2D g, OceanBoard.Data data);
 
   protected final void setActive(boolean active)
   {
