@@ -143,11 +143,22 @@ public class KeyManager
 
   public KeyManager(String storedPlayerKey)
   {
+    try
+    {
+      KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+      byte[] storedKeyData = Base64.getDecoder().decode(storedPlayerKey);
+      EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(storedKeyData);
+      playerKey = keyFactory.generatePublic(pubKeySpec);
+    }
+    catch(GeneralSecurityException ex)
+    {
+      throw new IllegalStateException(ex);
+    }
   }
 
   public String getPublicKey()
   {
-    byte[] data = own.getEncoded();
+    byte[] data = playerKey.getEncoded();
     return Base64.getEncoder().encodeToString(data);
   }
 
