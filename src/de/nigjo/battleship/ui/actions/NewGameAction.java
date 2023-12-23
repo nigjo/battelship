@@ -93,13 +93,12 @@ public class NewGameAction extends ActionBase
       try
       {
         savegame.storeToFile(savegameFile.toPath());
-        gamedata.put(BoardData.KEY_SELF, new BoardData(10));
-        BoardData opBoard = new BoardData(10);
-        opBoard.setOpponent(true);
-        gamedata.put(BoardData.KEY_OPPONENT, opBoard);
+
+        BattleshipGame.clearBoards(gamedata, 10);
+
         gamedata.put(Savegame.class.getName(), savegame);
         gamedata.put(BattleshipGame.KEY_PLAYER_NUM, 1);
-        gamedata.put(BattleshipGame.KEY_STATE, BattleshipGame.STATE_PLACEMENT);
+        BattleshipGame.updateState(gamedata, BattleshipGame.STATE_PLACEMENT);
       }
       catch(IOException ex)
       {
