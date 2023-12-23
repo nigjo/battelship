@@ -23,7 +23,6 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 
-import javax.swing.JComponent;
 import javax.swing.UIManager;
 
 import de.nigjo.battleship.BattleshipGame;
@@ -93,23 +92,18 @@ public class ShipsPlacer extends InteractivePainter
       if(currentShip >= ships.length)
       {
         setActive(false);
-        Storage.getDefault().find(BattleshipGame.class)
-            .ifPresent(g ->
-            {
-              KeyManager km = g.getData(KeyManager.KEY_MANAGER_SELF,
-                  KeyManager.class);
-              String playload = km.encode(board.toString());
-              g.getData(Savegame.class)
-                  .addRecord(Savegame.Record.BOARD, getCurrentPlayer(), playload);
-              g.putData(BattleshipGame.KEY_STATE, BattleshipGame.STATE_WAIT_START);
-            });
+        withGame(g ->
+        {
+          KeyManager km = g.getData(
+              KeyManager.KEY_MANAGER_SELF, KeyManager.class);
+          String payload = km.encode(board.toString());
+          g.getData(Savegame.class)
+              .addRecord(Savegame.Record.BOARD, getCurrentPlayer(), payload);
+          g.updateState(BattleshipGame.STATE_WAIT_START);
+        });
       }
 
-      Object source = e.getSource();
-      if(source instanceof JComponent)
-      {
-        ((JComponent)source).repaint();
-      }
+      repaint();
     }
     catch(IllegalArgumentException ex)
     {
