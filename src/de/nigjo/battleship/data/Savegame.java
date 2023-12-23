@@ -53,6 +53,11 @@ public class Savegame
 
   public void addRecord(Record record)
   {
+    if(record.getPlayerid() != 1
+        && record.getPlayerid() != 2)
+    {
+      throw new IllegalArgumentException("invalid player number " + record.getPlayerid());
+    }
     this.records.add(record);
     if(filename != null)
     {
@@ -77,7 +82,6 @@ public class Savegame
   public static Savegame readFromFile(Path savegameFile) throws IOException
   {
     var fis = new FileInputStream(savegameFile.toFile());
-    FileLock lock = fis.getChannel().lock();
     try(BufferedReader in = new BufferedReader(
         new InputStreamReader(fis, StandardCharsets.UTF_8)))
     {
@@ -118,10 +122,6 @@ public class Savegame
     catch(UncheckedIOException uioe)
     {
       throw uioe.getCause();
-    }
-    finally
-    {
-      lock.release();
     }
   }
 
