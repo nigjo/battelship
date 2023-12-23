@@ -41,15 +41,31 @@ public class BattleshipGame
   public BattleshipGame(Path playerId)
   {
     this.gamedata = new Storage();
-    this.gamedata.put(BoardData.KEY_SELF, new BoardData(10));
-    BoardData op = new BoardData(10);
-    op.setOpponent(true);
-    this.gamedata.put(BoardData.KEY_OPPONENT, op);
-
     gamedata.put(KeyManager.KEY_MANAGER_SELF, new KeyManager(playerId));
+    clearBoards(gamedata, 10);
 
     //just run-test the keymanager
     validateKeyManager();
+  }
+
+  public static void clearBoards(Storage gamedata, int size)
+  {
+    clearBoard(gamedata, size, false);
+    clearBoard(gamedata, size, true);
+  }
+
+  public static void clearBoard(Storage gamedata, int size, boolean opponent)
+  {
+    if(opponent)
+    {
+      BoardData op = new BoardData(size);
+      op.setOpponent(true);
+      gamedata.put(BoardData.KEY_OPPONENT, op);
+    }
+    else
+    {
+      gamedata.put(BoardData.KEY_SELF, new BoardData(size));
+    }
   }
 
   private void validateKeyManager()
