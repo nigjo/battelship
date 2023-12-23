@@ -24,9 +24,7 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 
 import javax.swing.JComponent;
-import javax.swing.Painter;
 import javax.swing.UIManager;
-import javax.swing.event.MouseInputAdapter;
 
 import de.nigjo.battleship.BattleshipGame;
 import de.nigjo.battleship.data.BoardData;
@@ -41,142 +39,91 @@ import de.nigjo.battleship.util.Storage;
  *
  * @author nigjo
  */
-public class ShipsPlacer implements Painter<BoardData>
+public class ShipsPlacer extends InteractivePainter
 {
-  private final JComponent context;
-  private final Supplier<BoardData> boarddata;
-  private int currentPlayer;
-  private boolean active;
-  private Point validLocation;
-  private Point lastMouseLocation;
   private boolean vertical;
   private int currentShip;
   private int[] ships;
 
   public ShipsPlacer(JComponent context, Supplier<BoardData> boarddata)
   {
-    this.context = context;
-    this.boarddata = boarddata;
-    if(this.boarddata.get().isOpponent())
+    super(context, boarddata);
+  }
+
+  @Override
+  protected boolean checkActive(Storage gamedata, String state)
+  {
+    if(BattleshipGame.STATE_PLACEMENT.equals(state))
+    {
+      boolean opponent = getBoarddata()
+          .map(BoardData::isOpponent)
+          .orElse(true);
+
+      ships = Arrays.stream(
+          gamedata.get("config.ships", BattleshipGame.Config.class)
+              .getValue().split(","))
+          .mapToInt(Integer::parseInt).toArray();
+
+      int currentPlayer = gamedata.getInt(BattleshipGame.KEY_PLAYER_NUM, 0);
+      return !opponent && currentPlayer > 0;
+    }
+    return false;
+  }
+
+  @Override
+  protected void selectCell(MouseEvent e)
+  {
+    Point validLocation = getSelectedCell();
+    if(validLocation == null)
     {
       return;
     }
-    BattleshipGame game =
+    try
+    {
+      BoardData board = getBoarddata().orElseThrow();
+      board.placeShip(currentShip, validLocation.x, validLocation.y,
+          ships[currentShip], vertical);
+      ++currentShip;
+
+      if(currentShip >= ships.length)
+      {
+        setActive(false);
         Storage.getDefault().find(BattleshipGame.class)
-            .orElseThrow();
-    game.addPropertyChangeListener(BattleshipGame.KEY_STATE,
-        pce -> checkGameState(pce.getSource(), pce.getNewValue()));
-    currentPlayer = game.getDataInt(BattleshipGame.KEY_PLAYER_NUM, 0);
-    MouseInputAdapter mia = new MouseInputAdapter()
+            .ifPresent(g ->
+            {
+              KeyManager km = g.getData(KeyManager.KEY_MANAGER_SELF,
+                  KeyManager.class);
+              String playload = km.encode(board.toString());
+              g.getData(Savegame.class)
+                  .addRecord(Savegame.Record.BOARD, getCurrentPlayer(), playload);
+              g.putData(BattleshipGame.KEY_STATE, BattleshipGame.STATE_WAIT_START);
+            });
+      }
+
+      Object source = e.getSource();
+      if(source instanceof JComponent)
+      {
+        ((JComponent)source).repaint();
+      }
+    }
+    catch(IllegalArgumentException ex)
     {
-      boolean inside = false;
-
-      @Override
-      public void mouseClicked(MouseEvent e)
-      {
-        if(active && validLocation != null)
-        {
-          setShipLocation();
-        }
-      }
-
-      @Override
-      public void mouseExited(MouseEvent e)
-      {
-        inside = false;
-        updateShipLocation(null);
-      }
-
-      @Override
-      public void mouseEntered(MouseEvent e)
-      {
-        inside = true;
-      }
-
-      @Override
-      public void mouseMoved(MouseEvent e)
-      {
-        if(active && inside)
-        {
-          updateShipLocation(e);
-        }
-      }
-
-    };
-    context.addMouseListener(mia);
-    context.addMouseMotionListener(mia);
-  }
-
-  private void checkGameState(Object source, Object state)
-  {
-    if(source instanceof Storage)
-    {
-      Savegame savegame = ((Storage)source).get(Savegame.class);
-      ships = savegame.getConfig("ships").stream()
-          .map(s -> s.split(","))
-          .flatMap(Arrays::stream)
-          .mapToInt(Integer::parseInt)
-          .toArray();
-      currentShip = 0;
-      currentPlayer = ((Storage)source).getInt(BattleshipGame.KEY_PLAYER_NUM, 0);
-      active = BattleshipGame.STATE_PLACEMENT.equals(state) && currentPlayer > 0;
+      StatusLine.getDefault().setText(ex.getLocalizedMessage());
     }
   }
 
-  private void setShipLocation()
+  @Override
+  protected void updateCellLocation(MouseEvent e)
   {
-    if(validLocation != null)
-    {
-      BoardData board = boarddata.get();
-      try
-      {
-        board.placeShip(currentShip, validLocation.x, validLocation.y,
-            ships[currentShip], vertical);
-        ++currentShip;
-
-        if(currentShip >= ships.length)
-        {
-          active = false;
-          Storage.getDefault().find(BattleshipGame.class)
-              .ifPresent(g ->
-              {
-                KeyManager km = g.getData(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
-                String playload = km.encode(board.toString());
-                g.getData(Savegame.class)
-                    .addRecord(Savegame.Record.BOARD, currentPlayer, playload);
-                g.putData(BattleshipGame.KEY_STATE, BattleshipGame.STATE_WAIT_START);
-              });
-        }
-
-        context.repaint();
-      }
-      catch(IllegalArgumentException ex)
-      {
-        StatusLine.getDefault().setText(ex.getLocalizedMessage());
-      }
-    }
-  }
-
-  private void updateShipLocation(MouseEvent e)
-  {
-    BoardData data = boarddata.get();
-    if(e == null || data == null || data.isOpponent())
-    {
-      lastMouseLocation = null;
-    }
-    else
-    {
-      lastMouseLocation = e.getPoint();
-      vertical = MouseEvent.SHIFT_DOWN_MASK == (e.getModifiersEx()
-          & MouseEvent.SHIFT_DOWN_MASK);
-    }
-    context.repaint();
+    super.updateCellLocation(e);
+    vertical = MouseEvent.SHIFT_DOWN_MASK == (e.getModifiersEx()
+        & MouseEvent.SHIFT_DOWN_MASK);
   }
 
   @Override
   public void paint(Graphics2D g, BoardData data, int width, int height)
   {
-    if(!active)
+    if(!isActive())
     {
       return;
     }
@@ -187,43 +134,20 @@ public class ShipsPlacer implements Painter<BoardData>
     int offX = getGridStartX(width, height) + cellSize + borderWidth;
     int offY = getGridStartY(width, height) + cellSize + borderWidth;
 
-    if(lastMouseLocation != null)
+    Point currentCell = updateCellLocation(data, width, height,
+        (x, y) -> (vertical ? y : x) + ships[currentShip] <= data.getSize());
+    if(currentCell != null)
     {
-      if(lastMouseLocation.x > offX && lastMouseLocation.y > offY)
+      work.setColor(new Color(192, 224, 255, 64));
+      for(int i = 0; i < ships[currentShip]; i++)
       {
-        int cellX = (lastMouseLocation.x - offX) / cellSize;
-        int cellY = (lastMouseLocation.y - offY) / cellSize;
-
-        boolean valid;
-        if(vertical)
-        {
-          valid = cellY + ships[currentShip] <= data.getSize();
-        }
-        else
-        {
-          valid = cellX + ships[currentShip] <= data.getSize();
-        }
-
-        if(valid)
-        {
-          validLocation = new Point(cellX, cellY);
-
-          work.setColor(new Color(192, 224, 255, 64));
-          for(int i = 0; i < ships[currentShip]; i++)
-          {
-            work.fillRect(
-                offX + (cellX + (vertical ? 0 : i)) * cellSize,
-                offY + (cellY + (vertical ? i : 0)) * cellSize,
-                cellSize, cellSize);
-          }
-        }
-        else
-        {
-          validLocation = null;
-        }
+        work.fillRect(
+            offX + (currentCell.x + (vertical ? 0 : i)) * cellSize,
+            offY + (currentCell.y + (vertical ? i : 0)) * cellSize,
+            cellSize, cellSize);
       }
-
     }
+
     String msg = "Vertikale Positionierung mit Shift";
     work.setColor(UIManager.getColor("textText"));
     work.drawString(msg, offX, offY + cellSize * (data.getSize()) + cellSize * 2 / 5);
