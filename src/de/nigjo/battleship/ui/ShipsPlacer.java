@@ -113,7 +113,6 @@ public class ShipsPlacer implements Painter<BoardData>
     if(source instanceof Storage)
     {
       Savegame savegame = ((Storage)source).get(Savegame.class);
-      active = BattleshipGame.STATE_PLACEMENT.equals(state);
       ships = savegame.records(1, Savegame.Record.SHIPS)
           .findFirst().stream()
           .map(r -> r.getPayload())
@@ -121,6 +120,8 @@ public class ShipsPlacer implements Painter<BoardData>
           .mapToInt(Integer::parseInt)
           .toArray();
       currentShip = 0;
+      currentPlayer = ((Storage)source).getInt(BattleshipGame.KEY_PLAYER_NUM, 0);
+      active = BattleshipGame.STATE_PLACEMENT.equals(state) && currentPlayer > 0;
     }
   }
 
