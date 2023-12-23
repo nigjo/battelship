@@ -17,6 +17,7 @@ package de.nigjo.battleship.ui.painter;
 
 import java.util.Optional;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import java.awt.Graphics2D;
@@ -96,6 +97,7 @@ public abstract class InteractivePainter implements OceanBoardPainter
     int offX = data.getOffsetX() + cellSize;
     int offY = data.getOffsetY() + cellSize;
 
+    validLocation = null;
     if(lastMouseLocation != null)
     {
       if(lastMouseLocation.x > offX && lastMouseLocation.y > offY)
@@ -106,10 +108,6 @@ public abstract class InteractivePainter implements OceanBoardPainter
         if(validateCoordiantes.test(cellX, cellY))
         {
           validLocation = new Point(cellX, cellY);
-        }
-        else
-        {
-          validLocation = null;
         }
       }
     }
@@ -127,6 +125,29 @@ public abstract class InteractivePainter implements OceanBoardPainter
     return get(boardSupplier);
   }
 
+  protected void withGame(Consumer<BattleshipGame> worker)
+  {
+    Storage.getDefault().find(BattleshipGame.class)
+        .ifPresent(worker);
+  }
+
+  protected void withBoard(Consumer<BoardData> worker)
+  {
+    get(boardSupplier)
+        .ifPresent(worker);
+  }
+
+  protected void withComponent(Consumer<JComponent> worker)
+  {
+    get(uiSupplier)
+        .ifPresent(worker);
+  }
+
+  protected final void repaint()
+  {
+    withComponent(JComponent::repaint);
+  }
+
   protected void updateCellLocation(MouseEvent e)
   {
     if(e == null || get(boardSupplier).isEmpty())
@@ -137,7 +158,7 @@ public abstract class InteractivePainter implements OceanBoardPainter
     {
       lastMouseLocation = e.getPoint();
     }
-    get(uiSupplier).ifPresent(JComponent::repaint);
+    repaint();
   }
 
   private <T> Optional<T> get(Supplier<T> s)
