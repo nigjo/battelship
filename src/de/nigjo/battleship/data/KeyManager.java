@@ -178,11 +178,9 @@ public class KeyManager
       }
       return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
     }
-
     catch(GeneralSecurityException ex)
     {
-      Logger.getLogger(KeyManager.class.getName()).log(Level.SEVERE, ex.toString(), ex);
-      return null;
+      throw new IllegalArgumentException(ex);
     }
   }
 
