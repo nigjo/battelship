@@ -15,15 +15,21 @@
  */
 package de.nigjo.battleship.ui.actions;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import java.awt.event.ActionEvent;
 
 import javax.swing.Icon;
 
+import de.nigjo.battleship.BattleshipGame;
+import de.nigjo.battleship.data.Savegame;
 import de.nigjo.battleship.ui.ActionBase;
 import de.nigjo.battleship.ui.StatusLine;
 import de.nigjo.battleship.util.Bundle;
+import de.nigjo.battleship.util.Storage;
 
 /**
  *
@@ -40,7 +46,26 @@ public class RefreshAction extends ActionBase
   @Override
   public void actionPerformed(ActionEvent e)
   {
-    StatusLine.getDefault().setText("Alles Neu gemacht");
+    BattleshipGame game = Storage.getDefault().get(BattleshipGame.class);
+    Savegame savegame = game.getData(Savegame.class);
+    if(savegame == null || savegame.getFilename() == null)
+    {
+      StatusLine.getDefault().setText("Keinen Spielstand gefunden.");
+    }
+    else
+    {
+      try
+      {
+        StatusLine.getDefault().setText("Lade Spielstanddatei neu ein.");
+        LoadGameAction.loadGame(savegame.getFilename());
+      }
+      catch(IOException ex)
+      {
+        Logger.getLogger(RefreshAction.class.getName()).log(Level.SEVERE, null, ex);
+        StatusLine.getDefault().setText(
+            ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage());
+      }
+    }
   }
 
   @Override
@@ -60,6 +85,5 @@ public class RefreshAction extends ActionBase
   {
     return loadIcon("icons8-refresh-24(-hdpi).png");
   }
-
 
 }
