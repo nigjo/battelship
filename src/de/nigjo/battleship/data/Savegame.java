@@ -22,8 +22,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import de.nigjo.battleship.BattleshipGame;
+import de.nigjo.battleship.util.Storage;
 
 /**
  *
@@ -220,6 +224,84 @@ public class Savegame
   private void setFilename(Path savegameFile)
   {
     this.filename = savegameFile;
+  }
+
+  public Record getLastRecord()
+  {
+    int index = records.size() - 1;
+    Record last;
+    do
+    {
+      last = records.get(index);
+      --index;
+    }
+    while(Record.MESSAGE.equals(last.getKind()));
+    return last;
+  }
+
+  public String[] getAttack(Record reference, KeyManager self)
+  {
+    if(Record.ATTACK.equals(reference.kind))
+    {
+      String encoded = reference.getPayload();
+      try{
+        String decoded = self.decode(encoded);
+        String[] posOnly = decoded.split(",");
+        BoardData ownBoard =
+            Storage.getDefault().get(BattleshipGame.class)
+                .getData(BoardData.KEY_SELF, BoardData.class);
+        int state =
+            ownBoard.stateAt(Integer.parseInt(posOnly[0]), Integer.parseInt(posOnly[1]));
+        String[] result = new String[]
+        {
+          posOnly[0], posOnly[1],
+          Boolean.toString(0 != (state & BoardData.SHIP))
+        };
+        return result;
+
+      }catch(IllegalArgumentException ex){
+        //keine dekodierung
+        int idx = records.indexOf(reference);
+        ListIterator<Record> it = records.listIterator(idx);
+        while(it.hasNext())
+        {
+          Record next = it.next();
+          if(Record.RESULT.equals(next.getKind()))
+          {
+            return getAttack(next, self);
+          }
+        }
+        //"ATTACK" war der letzte Eintrag
+        return null;
+      }
+    }
+    else if(Record.RESULT.equals(reference.kind))
+    {
+      String encoded = reference.getPayload();
+      try
+      {
+        String decoded = self.decode(encoded);
+        return decoded.split(",");
+      }
+      catch(IllegalArgumentException ex)
+      {
+        int idx = records.indexOf(reference);
+        ListIterator<Record> it = records.listIterator(idx);
+        while(it.hasPrevious())
+        {
+          Record next = it.previous();
+          if(Record.ATTACK.equals(next.getKind()))
+          {
+            return getAttack(next, self);
+          }
+        }
+        //vor "RESULT" war kein "ATTACK". Dürfte eigentlich nicht sein.
+        return null;
+      }
+    }
+
+    //Weder ATTACK noch RESULT...
+    return null;
   }
 
   public static class Record
