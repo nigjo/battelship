@@ -20,6 +20,7 @@ import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -83,11 +84,21 @@ public class Savegame
     }
   }
 
+  Path getFilename()
+  {
+    return filename;
+  }
+
   public Stream<Record> records(int player, String kind)
   {
     return this.records.stream()
         .filter(r -> r.getPlayerid() == player)
         .filter(r -> kind.equals(r.getKind()));
+  }
+
+  List<Record> records()
+  {
+    return Collections.unmodifiableList(new ArrayList<>(records));
   }
 
   public void setConfig(String key, String value)
@@ -194,6 +205,8 @@ public class Savegame
         out.newLine();
       }
       setFilename(savegameFile);
+
+      BackupManager.backup(this);
     }
     finally
     {

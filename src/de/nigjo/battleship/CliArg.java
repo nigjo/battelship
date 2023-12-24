@@ -34,6 +34,7 @@ public enum CliArg
 {
   help('?', false),
   id(true),
+  backup(false),
   NON_ARG_PARAM
   {
     @Override
