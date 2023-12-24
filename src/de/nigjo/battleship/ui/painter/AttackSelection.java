@@ -62,8 +62,9 @@ public class AttackSelection extends InteractivePainter
         KeyManager km = game.getData(
             KeyManager.KEY_MANAGER_OPPONENT, KeyManager.class);
         String payload = km.encode(selectedCell.x + "," + selectedCell.y);
+        //Immer mit der Spielernummer markieren, die den Record lesen kann
         game.getData(Savegame.class)
-            .addRecord(Savegame.Record.ATTACK, getCurrentPlayer(), payload);
+            .addRecord(Savegame.Record.ATTACK, 3 - getCurrentPlayer(), payload);
         game.updateState(BattleshipGame.STATE_WAIT_RESPONSE);
       });
     });
