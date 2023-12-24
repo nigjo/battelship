@@ -1,3 +1,4 @@
+de.nigjo.battleship.ui.painter.ActivePlayerMark
 de.nigjo.battleship.ui.painter.AttackResults
 de.nigjo.battleship.ui.painter.AttackSelection
 de.nigjo.battleship.ui.painter.DebugCross
