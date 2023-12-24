@@ -37,15 +37,28 @@ import de.nigjo.battleship.ui.OceanBoardPainter;
 public class AttackResults implements OceanBoardPainter
 {
   private final BufferedImage hit;
-  private BufferedImage miss;
+  private final BufferedImage miss;
+  private final BufferedImage hit32;
+  private final BufferedImage miss32;
+  private final BufferedImage hit64;
+  private final BufferedImage miss64;
 
   public AttackResults()
   {
     try
     {
-      hit = ImageIO
-          .read(AttackResults.class.getResource("icons8-explosion-24(-hdpi).png"));
-      miss = ImageIO.read(AttackResults.class.getResource("icons8-water-24(-hdpi).png"));
+      hit = ImageIO.read(AttackResults.class.getResource(
+          "icons8-explosion-24(-hdpi).png"));
+      miss = ImageIO.read(AttackResults.class.getResource(
+          "icons8-water-24(-hdpi).png"));
+      hit32 = ImageIO.read(AttackResults.class.getResource(
+          "icons8-explosion-32(-xhdpi).png"));
+      miss32 = ImageIO.read(AttackResults.class.getResource(
+          "icons8-water-32(-xhdpi).png"));
+      hit64 = ImageIO.read(AttackResults.class.getResource(
+          "icons8-explosion-64(-xxxhdpi).png"));
+      miss64 = ImageIO.read(AttackResults.class.getResource(
+          "icons8-water-64(-xxxhdpi).png"));
     }
     catch(IOException ex)
     {
@@ -84,11 +97,11 @@ public class AttackResults implements OceanBoardPainter
           Image icon;
           if(0 != (state & BoardData.SHIP))
           {
-            icon = hit;
+            icon = cellSize < 36 ? hit : (cellSize < 68 ? hit32 : hit64);
           }
           else
           {
-            icon = miss;
+            icon = cellSize < 36 ? miss : (cellSize < 68 ? miss32 : miss64);
           }
           if(icon != null && cellSize > 12)
           {
@@ -111,8 +124,8 @@ public class AttackResults implements OceanBoardPainter
           }
           else
           {
-            work.drawLine(cX, cY, cX + cellSize, cY + cellSize);
-            work.drawLine(cX, cY + cellSize, cX + cellSize, cY);
+            work.drawLine(cX + 1, cY + 1, cX + cellSize - 1, cY + cellSize - 1);
+            work.drawLine(cX + 1, cY + cellSize - 1, cX + cellSize - 1, cY + 1);
           }
         }
       }
