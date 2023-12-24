@@ -39,7 +39,7 @@ public class ActivePlayerMark implements OceanBoardPainter
   public ActivePlayerMark()
   {
     Storage.getDefault().get(BattleshipGame.class)
-        .addPropertyChangeListener("activePlayer",
+        .addPropertyChangeListener(BattleshipGame.KEY_PLAYER,
             pce ->
         {
           currentActivePlayer = (String)pce.getNewValue();

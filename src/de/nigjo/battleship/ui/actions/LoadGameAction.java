@@ -27,6 +27,7 @@ import javax.swing.JFileChooser;
 
 import de.nigjo.battleship.BattleshipGame;
 import de.nigjo.battleship.data.BoardData;
+import de.nigjo.battleship.data.GamePlayback;
 import de.nigjo.battleship.data.KeyManager;
 import de.nigjo.battleship.data.Savegame;
 import de.nigjo.battleship.ui.ActionBase;
@@ -93,7 +94,6 @@ public class LoadGameAction extends ActionBase
         KeyManager opponent = new KeyManager(player2key);
         game.putData(KeyManager.KEY_MANAGER_OPPONENT, opponent);
 
-        //TODO:savegame.playbackTo(gamedata, km, 1);
         boolean hasPlacedShipsForPlayer2 =
             savegame.records(2, Savegame.Record.BOARD)
                 .findFirst().isPresent();
@@ -104,8 +104,19 @@ public class LoadGameAction extends ActionBase
         }
         else
         {
+          GamePlayback
+              .from(savegame)
+              .asPlayer(1)
+              .with(km)
+              .to(game.getData(BoardData.KEY_SELF, BoardData.class));
+          GamePlayback
+              .from(savegame)
+              .asPlayer(1)
+              .with(km)
+              .to(game.getData(BoardData.KEY_OPPONENT, BoardData.class));
+
           //TODO:savegame.playbackTo(gamedata, km, 2);
-          game.updateState(BattleshipGame.STATE_ATTACK);
+          game.updateState();
         }
       }
     }
@@ -137,8 +148,18 @@ public class LoadGameAction extends ActionBase
         }
         else
         {
-          //TODO:savegame.playbackTo(gamedata, km, 2);
-          game.updateState(BattleshipGame.STATE_WAIT_ATTACK);
+          GamePlayback
+              .from(savegame)
+              .asPlayer(2)
+              .with(km)
+              .to(game.getData(BoardData.KEY_SELF, BoardData.class));
+          GamePlayback
+              .from(savegame)
+              .asPlayer(2)
+              .with(km)
+              .to(game.getData(BoardData.KEY_OPPONENT, BoardData.class));
+
+          game.updateState();
         }
       }
       else

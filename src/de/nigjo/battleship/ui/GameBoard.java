@@ -28,6 +28,7 @@ import javax.swing.JToolBar;
 
 import de.nigjo.battleship.BattleshipGame;
 import de.nigjo.battleship.data.BoardData;
+import de.nigjo.battleship.util.Storage;
 
 /**
  *
@@ -65,6 +66,9 @@ public class GameBoard extends JPanel
     players.add(createPlayerSide(game, BoardData.KEY_SELF));
     players.add(createPlayerSide(game, BoardData.KEY_OPPONENT));
     add(players, BorderLayout.CENTER);
+
+    Storage.getDefault().get(BattleshipGame.class)
+        .addPropertyChangeListener(BattleshipGame.KEY_PLAYER, pce -> repaint());
   }
 
   private static JPanel createPlayerSide(BattleshipGame game, String boardkey)
@@ -79,6 +83,7 @@ public class GameBoard extends JPanel
     JToolBar playerActions = new JToolBar("Actions", JToolBar.VERTICAL);
     playerBoard.add(playerActions, BorderLayout.LINE_START);
     OceanBoard ocean = new OceanBoard(playerData);
+    ocean.setName(playerData.isOpponent() ? "opponent" : "self");
     playerBoard.add(ocean, BorderLayout.CENTER);
 
     game.addPropertyChangeListener(boardkey,

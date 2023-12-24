@@ -18,6 +18,9 @@ package de.nigjo.battleship.data;
 import java.util.Random;
 
 /**
+ * Speichert den Status des Spielbrettes eines Spielers. Änderungen an dieser Instanz
+ * erzeugt keine Statusänderungen im Spiel selbst. Dies muss an geeigneter anderer Stelle
+ * erfolgen.
  *
  * @author nigjo
  */
@@ -124,13 +127,17 @@ public class BoardData
       throw new IllegalStateException("this is your own board");
     }
     active = true;
-    board[y * size + x] &= hit ? SHIP : SHOOTED_AT;
+    board[y * size + x] |= (hit ? SHIP : 0) + SHOOTED_AT;
   }
 
   public boolean shootAt(int x, int y)
   {
     active = true;
-    board[y * size + x] &= hasShips ? VERTICAL : SHOOTED_AT;
+    board[y * size + x] |= SHOOTED_AT;
+    if(opponent)
+    {
+      board[y * size + x] |= VERTICAL;
+    }
 
     return (board[y * size + x] & SHIP) > 0;
   }
@@ -162,6 +169,7 @@ public class BoardData
     for(int i = 0; i < data.board.length; i++)
     {
       data.board[i] = state.indexOf(boarddata.charAt(i));
+      data.hasShips |= (data.board[i] & SHIP) != 0;
     }
 
     return data;
