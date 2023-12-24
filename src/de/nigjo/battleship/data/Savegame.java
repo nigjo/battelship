@@ -88,7 +88,7 @@ public class Savegame
     }
   }
 
-  Path getFilename()
+  public Path getFilename()
   {
     return filename;
   }
