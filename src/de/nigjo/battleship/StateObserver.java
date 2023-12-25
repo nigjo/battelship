@@ -43,7 +43,7 @@ public class StateObserver implements PropertyChangeListener
   public void propertyChange(PropertyChangeEvent pce)
   {
     Object stateValue = pce.getNewValue();
-    Logger.getLogger(StateObserver.class.getName()).log(Level.INFO,
+    Logger.getLogger(StateObserver.class.getName()).log(Level.FINE,
         "next state: {0}", stateValue);
     if(!(stateValue instanceof String))
     {
@@ -147,11 +147,12 @@ public class StateObserver implements PropertyChangeListener
       Integer.parseInt(split[0]), Integer.parseInt(split[1])
     };
     boolean hit = data.shootAt(pos[0], pos[1]);
+    String message = "Schuß auf "
+        + Character.toString('A' + pos[0]) + (pos[1] + 1)
+        + ", " + (hit ? "Treffer" : "Daneben");
 
-    StatusLine.getDefault().setText(
-        "Schuß auf "
-        + ('A' + pos[0]) + (pos[1] + 1)
-        + ", " + (hit ? "Treffer" : "Daneben"));
+    StatusLine.getDefault().setText(message);
+    savegame.addRecord(Savegame.Record.MESSAGE, playerSelf, message);
 
     KeyManager other = game.getData(KeyManager.KEY_MANAGER_OPPONENT, KeyManager.class);
     String response = payload + "," + hit;
