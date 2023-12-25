@@ -64,8 +64,10 @@ public class StateObserver implements PropertyChangeListener
       case STATE_WAIT_START:
         //Lokal sind die Schiffe platziert.
         //Pruefen, ob beide Spieler ein "volles" Brett haben.
-        if(game.getData(BoardData.KEY_SELF, BoardData.class).hasShips()
-            && game.getData(BoardData.KEY_OPPONENT, BoardData.class).hasShips())
+        Savegame sg = game.getData(Savegame.class);
+        boolean player1set = sg.records(1, Savegame.Record.BOARD).findFirst().isPresent();
+        boolean player2set = sg.records(2, Savegame.Record.BOARD).findFirst().isPresent();
+        if(player1set && player2set)
         {
           if(playerSelf == 1)
           {
@@ -78,7 +80,13 @@ public class StateObserver implements PropertyChangeListener
             game.updateState(STATE_WAIT_ATTACK);
           }
         }
+        else
+        {
+          Logger.getLogger(StateObserver.class.getName())
+              .log(Level.FINE, "missing at least one board");
+        }
         break;
+
       case STATE_ATTACK:
         //Es soll ein Schuss erfolgen.
         //Wird in AttackSelection behandelt.
@@ -150,6 +158,8 @@ public class StateObserver implements PropertyChangeListener
     String message = "Schuß auf "
         + Character.toString('A' + pos[0]) + (pos[1] + 1)
         + ", " + (hit ? "Treffer" : "Daneben");
+    Logger.getLogger(BattleshipGame.class.getName())
+        .log(Level.INFO, "{0}", message);
 
     StatusLine.getDefault().setText(message);
     savegame.addRecord(Savegame.Record.MESSAGE, playerSelf, message);
