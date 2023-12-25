@@ -43,7 +43,7 @@ public class ActivePlayerMark implements OceanBoardPainter
             pce ->
         {
           currentActivePlayer = (String)pce.getNewValue();
-          Logger.getLogger(DebugCross.class.getName()).log(Level.INFO,
+          Logger.getLogger(ActivePlayerMark.class.getName()).log(Level.FINE,
               "active player is ''{0}''.", currentActivePlayer);
         });
   }
