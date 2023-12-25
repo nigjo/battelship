@@ -16,7 +16,15 @@
 package de.nigjo.battleship;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import java.awt.BorderLayout;
 import java.awt.GraphicsEnvironment;
@@ -52,6 +60,8 @@ public class Launcher
       SwingUtilities.invokeLater(Launcher::initUI);
     }
     //</editor-fold>
+
+    initLogger();
 
     //<editor-fold defaultstate="collapsed" desc="parseCommandLine();">
     try
@@ -95,13 +105,19 @@ public class Launcher
 
     SwingUtilities.invokeLater(() ->
     {
+      Logger.getLogger(Launcher.class.getName()).log(Level.FINEST,
+          "creating UI");
       Launcher.createUI();
       if(CliArg.NON_ARG_PARAM.isDefined())
       {
+        Logger.getLogger(Launcher.class.getName()).log(Level.FINEST,
+            "savegame defined in command line");
         SwingUtilities.invokeLater(Launcher::loadGamefile);
       }
       else
       {
+        Logger.getLogger(Launcher.class.getName()).log(Level.FINEST,
+            "start with random boards");
         game.initRandom();
       }
     });
@@ -112,7 +128,10 @@ public class Launcher
   {
     try
     {
-      LoadGameAction.loadGame(Path.of(CliArg.NON_ARG_PARAM.getParam()));
+      Path loadgame = Path.of(CliArg.NON_ARG_PARAM.getParam());
+      Logger.getLogger(Launcher.class.getName())
+          .log(Level.CONFIG, "loading {0}", loadgame.toAbsolutePath().normalize());
+      LoadGameAction.loadGame(loadgame);
     }
     catch(RuntimeException ex)
     {
@@ -163,4 +182,56 @@ public class Launcher
     StatusLine.getDefault().setText("Willkommen zu Schiffe versenken");
   }
 
+  private static final Logger APP_LOGGER =
+      Logger.getLogger(Launcher.class.getPackageName());
+
+  private static void initLogger()
+  {
+    Storage.getDefault().put(Logger.class.getName(), APP_LOGGER);
+
+    String levelConfig = System.getProperty(APP_LOGGER.getName() + ".level", "INFO");
+    Level level = Level.parse(levelConfig);
+    APP_LOGGER.setLevel(level);
+    APP_LOGGER.setUseParentHandlers(false);
+
+    Handler outhandler = new ConsoleHandler();
+    outhandler.setLevel(level);
+    Formatter simpleFormatter = new Formatter()
+    {
+      @Override
+      public String format(LogRecord lr)
+      {
+        String loggerName = lr.getLoggerName();
+        if(loggerName == null)
+        {
+          loggerName = lr.getSourceClassName();
+        }
+        String simple = loggerName.substring(loggerName.lastIndexOf('.') + 1);
+
+        return lr.getLevel().getName()
+            + " [" + simple + "]: "
+            + formatMessage(lr) + "\n";
+      }
+    };
+    outhandler.setFormatter(simpleFormatter);
+    Launcher.APP_LOGGER.addHandler(outhandler);
+
+    String logfileName = System.getProperty(APP_LOGGER.getName() + ".file");
+    if(logfileName != null)
+    {
+      try
+      {
+        Path logfile = Path.of(logfileName).toAbsolutePath().normalize();
+        FileHandler fileHandler =
+            new java.util.logging.FileHandler(logfile.toString());
+        fileHandler.setLevel(level);
+        fileHandler.setFormatter(simpleFormatter);
+        Launcher.APP_LOGGER.addHandler(fileHandler);
+      }
+      catch(IOException ex)
+      {
+        throw new UncheckedIOException(ex);
+      }
+    }
+  }
 }
