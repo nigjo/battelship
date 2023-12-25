@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import java.awt.event.ActionEvent;
 
@@ -62,6 +64,8 @@ public class LoadGameAction extends ActionBase
 
   public static void loadGame(Path saveGameFile) throws IOException
   {
+    Logger.getLogger(LoadGameAction.class.getName())
+        .log(Level.INFO, "loading game from {0}", saveGameFile.toAbsolutePath());
     BattleshipGame game =
         Storage.getDefault().find(BattleshipGame.class)
             .orElseThrow();
