@@ -34,6 +34,7 @@ import javax.swing.JOptionPane;
 import de.nigjo.battleship.BattleshipGame;
 import de.nigjo.battleship.data.KeyManager;
 import de.nigjo.battleship.data.Savegame;
+import de.nigjo.battleship.data.SavegameManager;
 import de.nigjo.battleship.ui.ActionBase;
 import de.nigjo.battleship.ui.ActionsManager;
 import de.nigjo.battleship.ui.DialogDisplayer;
@@ -115,6 +116,8 @@ public class NewGameAction extends ActionBase
       game.putData(BattleshipGame.KEY_PLAYER_NUM, 1);
 
       game.updateState(BattleshipGame.STATE_PLACEMENT);
+
+      SavegameManager.register(game, savegameFile);
     }
     catch(IOException ex)
     {

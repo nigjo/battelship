@@ -32,6 +32,7 @@ import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.GamePlayback;
 import de.nigjo.battleship.data.KeyManager;
 import de.nigjo.battleship.data.Savegame;
+import de.nigjo.battleship.data.SavegameManager;
 import de.nigjo.battleship.ui.ActionBase;
 import de.nigjo.battleship.ui.StatusLine;
 import de.nigjo.battleship.util.Bundle;
@@ -58,6 +59,8 @@ public class LoadGameAction extends ActionBase
       catch(IOException ex)
       {
         StatusLine.getDefault().setText("FEHLER: " + ex.getLocalizedMessage());
+        Logger.getLogger(LoadGameAction.class.getName())
+            .log(Level.WARNING, ex.toString(), ex);
       }
     }
   }
@@ -170,8 +173,10 @@ public class LoadGameAction extends ActionBase
       {
         StatusLine.getDefault().setText("Das Spiel hat bereits 2 Spieler.");
         game.clearBoards();
+        return;
       }
     }
+    SavegameManager.register(game, saveGameFile);
   }
 
   private static boolean loadBoardForPlayer(int player,
