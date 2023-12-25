@@ -19,6 +19,8 @@ import java.io.Console;
 import java.util.Arrays;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import java.awt.GraphicsEnvironment;
 import java.awt.HeadlessException;
@@ -105,8 +107,16 @@ public enum CliArg
   public static void parse(String args[])
   {
     CliArg lastArg = null;
+    int counter = 0;
     for(String arg : args)
     {
+      Logger.getLogger(CliArg.class.getName())
+          .log(Level.CONFIG, "{0}: {1}",
+              new Object[]
+              {
+                ++counter,
+                arg
+              });
       if(arg.charAt(0) == '-')
       {
         if(lastArg != null && lastArg.hasParam)
