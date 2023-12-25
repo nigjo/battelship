@@ -66,6 +66,8 @@ public class AttackSelection extends InteractivePainter
         //Immer mit der Spielernummer markieren, die den Record lesen kann
         game.getData(Savegame.class)
             .addRecord(Savegame.Record.MESSAGE, getCurrentPlayer(), message);
+        Logger.getLogger(BattleshipGame.class.getName())
+            .log(Level.INFO, "{0}", message);
         game.getData(Savegame.class)
             .addRecord(Savegame.Record.ATTACK, 3 - getCurrentPlayer(), payload);
         game.updateState(BattleshipGame.STATE_WAIT_RESPONSE);
