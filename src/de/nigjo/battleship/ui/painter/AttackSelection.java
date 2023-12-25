@@ -52,8 +52,9 @@ public class AttackSelection extends InteractivePainter
   protected void selectCell(MouseEvent e)
   {
     Point selectedCell = getSelectedCell();
-    StatusLine.getDefault().setText("Attacke auf "
-        + Character.toString('A' + selectedCell.x) + (selectedCell.y + 1));
+    String message = "Attacke auf "
+        + Character.toString('A' + selectedCell.x) + (selectedCell.y + 1);
+    StatusLine.getDefault().setText(message);
     withBoard(board ->
     {
       board.shootAt(selectedCell.x, selectedCell.y);
@@ -63,6 +64,8 @@ public class AttackSelection extends InteractivePainter
             KeyManager.KEY_MANAGER_OPPONENT, KeyManager.class);
         String payload = km.encode(selectedCell.x + "," + selectedCell.y);
         //Immer mit der Spielernummer markieren, die den Record lesen kann
+        game.getData(Savegame.class)
+            .addRecord(Savegame.Record.MESSAGE, getCurrentPlayer(), message);
         game.getData(Savegame.class)
             .addRecord(Savegame.Record.ATTACK, 3 - getCurrentPlayer(), payload);
         game.updateState(BattleshipGame.STATE_WAIT_RESPONSE);
@@ -78,12 +81,10 @@ public class AttackSelection extends InteractivePainter
         .map(BoardData::isOpponent)
         .orElse(true);
     boolean active = opponent && BattleshipGame.STATE_ATTACK.equals(state);
-    Logger.getLogger(AttackSelection.class.getName()).log(Level.INFO, "Attack {0}: {1}",
-        new Object[]
-        {
-          opponent,
-          active
-        });
+    if(active)
+    {
+      Logger.getLogger(AttackSelection.class.getName()).log(Level.FINE, "activated");
+    }
     return active;
   }
 
