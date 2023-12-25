@@ -24,6 +24,12 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import java.awt.GraphicsEnvironment;
+
+import javax.swing.SwingUtilities;
 
 import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.KeyManager;
@@ -82,13 +88,20 @@ public final class BattleshipGame
 
   private static Consumer<Runnable> createExecutor()
   {
-    var service = Executors.newSingleThreadExecutor((r) ->
+    if(GraphicsEnvironment.isHeadless())
     {
-      Thread t = new Thread(r);
-      t.setDaemon(true);
-      return t;
-    });
-    return service::execute;
+      var service = Executors.newSingleThreadExecutor((r) ->
+      {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        return t;
+      });
+      return service::execute;
+    }
+    else
+    {
+      return SwingUtilities::invokeLater;
+    }
   }
 
   public BattleshipGame(Path playerId, Consumer<Runnable> stateChangeRunner)
@@ -262,6 +275,8 @@ public final class BattleshipGame
 
   public void updateState()
   {
+    Logger.getLogger(BattleshipGame.class.getName())
+        .log(Level.FINER, "updating next state from current game state");
     int selfId = getDataInt(KEY_PLAYER_NUM, 0);
     Savegame.Record lastAction = getData(Savegame.class).getLastRecord();
     if(Savegame.Record.ATTACK.equals(lastAction.getKind()))
@@ -302,6 +317,10 @@ public final class BattleshipGame
           updateState(STATE_ATTACK);
         }
       }
+    }
+    else
+    {
+      updateState(STATE_WAIT_START);
     }
   }
 
