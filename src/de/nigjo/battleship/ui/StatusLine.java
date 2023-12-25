@@ -19,6 +19,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import java.awt.FlowLayout;
 
@@ -64,6 +66,7 @@ public class StatusLine extends JPanel
   public void setText(String message)
   {
     text.setText((message == null || message.isBlank()) ? NBSP : message);
+    Logger.getLogger(StatusLine.class.getName()).log(Level.INFO, "{0}", message);
     lastUpdate.set(System.currentTimeMillis());
     updater.schedule(() ->
     {
