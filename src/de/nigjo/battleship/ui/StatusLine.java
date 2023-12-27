@@ -15,6 +15,9 @@
  */
 package de.nigjo.battleship.ui;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -22,11 +25,15 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import de.nigjo.battleship.util.Storage;
 
@@ -42,12 +49,15 @@ public class StatusLine extends JPanel
   private final JLabel text;
   private final ScheduledExecutorService updater;
   private final AtomicLong lastUpdate;
+  private JPanel statusBlock;
 
   public StatusLine()
   {
-    super(new FlowLayout(FlowLayout.LEADING, 8, 4));
+    super(new BorderLayout(8, 4));
+    setBorder(BorderFactory
+        .createMatteBorder(1, 0, 0, 0, UIManager.getColor("controlShadow")));
     text = new JLabel(NBSP);
-    add(text);
+    add(text, BorderLayout.CENTER);
     lastUpdate = new AtomicLong(System.currentTimeMillis());
     updater = Executors.newSingleThreadScheduledExecutor(r ->
     {
@@ -80,5 +90,78 @@ public class StatusLine extends JPanel
         }
       });
     }, SECONDS_TO_FADE, TimeUnit.SECONDS);
+  }
+
+  public static int max(String... texts)
+  {
+    int max = 0;
+    for(String text : texts)
+    {
+      JLabel tmp = new JLabel(text);
+      int width = tmp.getPreferredSize().width;
+      if(max < width)
+      {
+        max = width;
+      }
+    }
+    return max;
+  }
+
+  public void setStatus(String name, String message)
+  {
+    if(!labels.containsKey(name))
+    {
+      Logger.getLogger(StatusLine.class.getName())
+          .log(Level.WARNING, "status for {0} not found", name);
+    }
+    else
+    {
+      JLabel status = labels.get(name);
+      status.setText((message == null || message.isBlank()) ? NBSP : message);
+      Logger.getLogger(StatusLine.class.getName()).log(Level.FINE, "{0}: {1}",
+          new Object[]
+          {
+            name, message
+          });
+    }
+  }
+
+  private Map<Integer, String> positions;
+  private Map<String, JLabel> labels;
+
+  public void createStatus(String name, int position, int width)
+  {
+    if(labels == null)
+    {
+      labels = new HashMap<>();
+      positions = new TreeMap<>();
+    }
+    positions.put(position, name);
+    JLabel status = new JLabel(name, JLabel.RIGHT);
+    status.setForeground(UIManager.getColor("textInactiveText"));
+    status.setToolTipText(name);
+    status.setPreferredSize(
+        new java.awt.Dimension(width + 4, status.getPreferredSize().height));
+    status.setBorder(BorderFactory
+        .createMatteBorder(0, 1, 0, 0, UIManager.getColor("controlShadow")));
+    labels.put(name, status);
+
+    if(statusBlock == null)
+    {
+      statusBlock = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
+      add(statusBlock, BorderLayout.LINE_END);
+    }
+    int maxWidth = labels.values().stream()
+        .map(JLabel::getPreferredSize)
+        .mapToInt(d -> d.width)
+        .sum()
+        + (labels.size()) * 4;
+    statusBlock.setPreferredSize(
+        new Dimension(maxWidth, status.getPreferredSize().height));
+
+    statusBlock.removeAll();
+    positions.values().stream()
+        .map(labels::get)
+        .forEach(statusBlock::add);
   }
 }
