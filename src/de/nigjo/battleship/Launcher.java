@@ -18,6 +18,7 @@ package de.nigjo.battleship;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
@@ -179,7 +180,24 @@ public class Launcher
     frame.pack();
     frame.setVisible(true);
 
+    addObververStatus(game, BattleshipGame.KEY_PLAYER_NUM, 100,
+        StatusLine.max("1", "2"));
+    addObververStatus(game, BattleshipGame.KEY_PLAYER, 5000,
+        StatusLine.max(BattleshipGame.PLAYER_SELF,
+            BattleshipGame.PLAYER_OPPONENT));
+
     StatusLine.getDefault().setText("Willkommen zu Schiffe versenken");
+  }
+
+  private static void addObververStatus(BattleshipGame game,
+      String key, int pos, int width)
+  {
+    StatusLine.getDefault().createStatus(key, pos, width);
+    StatusLine.getDefault().setStatus(key, game.getDataString(key));
+    game.addPropertyChangeListener(key,
+        pce -> StatusLine.getDefault()
+            .setStatus(key, Objects.toString(pce.getNewValue(), null))
+    );
   }
 
   private static final Logger APP_LOGGER =
