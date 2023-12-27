@@ -17,6 +17,7 @@ package de.nigjo.battleship.ui.actions;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
@@ -111,16 +112,30 @@ public class LoadGameAction extends ActionBase
         }
         else
         {
-          GamePlayback
-              .from(savegame)
-              .asPlayer(1)
-              .with(km)
-              .to(game.getData(BoardData.KEY_SELF, BoardData.class));
-          GamePlayback
-              .from(savegame)
-              .asPlayer(1)
-              .with(km)
-              .to(game.getData(BoardData.KEY_OPPONENT, BoardData.class));
+          try
+          {
+            GamePlayback
+                .from(savegame)
+                .asPlayer(1)
+                .with(km)
+                .to(game.getData(BoardData.KEY_SELF, BoardData.class));
+            GamePlayback
+                .from(savegame)
+                .asPlayer(1)
+                .with(km)
+                .to(game.getData(BoardData.KEY_OPPONENT, BoardData.class));
+          }
+          catch(IllegalArgumentException ex)
+          {
+            if(ex.getCause() instanceof GeneralSecurityException)
+            {
+              throw new IOException(ex.getCause());
+            }
+            else
+            {
+              throw ex;
+            }
+          }
 
           //TODO:savegame.playbackTo(gamedata, km, 2);
           game.updateState();
@@ -155,16 +170,30 @@ public class LoadGameAction extends ActionBase
         }
         else
         {
-          GamePlayback
-              .from(savegame)
-              .asPlayer(2)
-              .with(km)
-              .to(game.getData(BoardData.KEY_SELF, BoardData.class));
-          GamePlayback
-              .from(savegame)
-              .asPlayer(2)
-              .with(km)
-              .to(game.getData(BoardData.KEY_OPPONENT, BoardData.class));
+          try
+          {
+            GamePlayback
+                .from(savegame)
+                .asPlayer(2)
+                .with(km)
+                .to(game.getData(BoardData.KEY_SELF, BoardData.class));
+            GamePlayback
+                .from(savegame)
+                .asPlayer(2)
+                .with(km)
+                .to(game.getData(BoardData.KEY_OPPONENT, BoardData.class));
+          }
+          catch(IllegalArgumentException ex)
+          {
+            if(ex.getCause() instanceof GeneralSecurityException)
+            {
+              throw new IOException(ex.getCause());
+            }
+            else
+            {
+              throw ex;
+            }
+          }
 
           game.updateState();
         }
