@@ -23,3 +23,11 @@ jobs:
         distribution: 'temurin'
     - name: Build with Ant
       run: ant -noinput -buildfile build.xml
+    - name: Archive Artefacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist-without-javadoc
+        path: |
+          dist
+          !dist/javadoc/**
+      
