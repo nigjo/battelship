@@ -135,10 +135,17 @@ public class SavegameManager implements Closeable
                 reloader = () ->
                 {
                   reloader = null;
+                  Logger.getLogger(SavegameManager.class.getName())
+                      .log(Level.FINE, "reload savegame");
                   StatusLine.getDefault().setText("Spiel wird aktualisiert...");
                   SwingUtilities.invokeLater(this::reloadSavegame);
                 };
                 updater.schedule(reloader, 1, TimeUnit.SECONDS);
+              }
+              else
+              {
+                Logger.getLogger(SavegameManager.class.getName())
+                    .log(Level.FINE, "change detected. already waiting to update");
               }
             }
           }
