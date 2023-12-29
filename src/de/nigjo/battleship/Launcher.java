@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.function.UnaryOperator;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
@@ -183,8 +184,22 @@ public class Launcher
     addObververStatus(game, BattleshipGame.KEY_PLAYER_NUM, 100,
         StatusLine.max("1", "2"));
     addObververStatus(game, BattleshipGame.KEY_PLAYER, 5000,
-        StatusLine.max(BattleshipGame.PLAYER_SELF,
-            BattleshipGame.PLAYER_OPPONENT));
+        StatusLine.max(
+            BattleshipGame.PLAYER_SELF,
+            BattleshipGame.PLAYER_OPPONENT
+        ));
+    UnaryOperator<String> stateModifier = s -> s.substring(s.lastIndexOf('.') + 1);
+    addObververStatus(game, BattleshipGame.KEY_STATE, 500,
+        StatusLine.max(
+            stateModifier.apply(BattleshipGame.STATE_ATTACK),
+            stateModifier.apply(BattleshipGame.STATE_ATTACKED),
+            stateModifier.apply(BattleshipGame.STATE_FINISHED),
+            stateModifier.apply(BattleshipGame.STATE_PLACEMENT),
+            stateModifier.apply(BattleshipGame.STATE_RESPONSE),
+            stateModifier.apply(BattleshipGame.STATE_WAIT_ATTACK),
+            stateModifier.apply(BattleshipGame.STATE_WAIT_RESPONSE),
+            stateModifier.apply(BattleshipGame.STATE_WAIT_START)
+        ), stateModifier);
 
     StatusLine.getDefault().setText("Willkommen zu Schiffe versenken");
   }
@@ -192,11 +207,21 @@ public class Launcher
   private static void addObververStatus(BattleshipGame game,
       String key, int pos, int width)
   {
+    addObververStatus(game, key, pos, width, UnaryOperator.identity());
+  }
+
+  private static void addObververStatus(BattleshipGame game,
+      String key, int pos, int width, UnaryOperator<String> statusModifier)
+  {
     StatusLine.getDefault().createStatus(key, pos, width);
-    StatusLine.getDefault().setStatus(key, game.getDataString(key));
+    StatusLine.getDefault().setStatus(key,
+        statusModifier.apply(game.getDataString(key)));
     game.addPropertyChangeListener(key,
         pce -> StatusLine.getDefault()
-            .setStatus(key, Objects.toString(pce.getNewValue(), null))
+            .setStatus(key,
+                statusModifier.apply(
+                    Objects.toString(pce.getNewValue(), null)
+                ))
     );
   }
 
