@@ -70,5 +70,25 @@
   nbproject/build-impl.xml file. 
 
   -->
+  
+  <target name="-pre-init">
+    <ant dir=".." target="download-libraries"/>
+  </target>
     
+  <target name="test" depends="compile-test,-pre-test-run">
+    <!-- Run JUnit5 -->
+    <java dir="${basedir}"  failonerror="false" errorproperty="junitrc"
+          classpath="${run.test.classpath}"
+          classname="org.junit.platform.console.ConsoleLauncher">
+      <arg value="--scan-classpath"/>
+      <arg line="--reports-dir build/test/results"/>
+    </java>
+    <junitreport todir="build/test/results">
+      <fileset dir="build/test/results">
+        <include name="TEST-*.xml"/>
+      </fileset>
+      <report format="frames" todir="build/test/results/html"/>
+    </junitreport>
+  </target>
+
 </project>

@@ -9,6 +9,7 @@
         <property name="dist.dir" location="dist"/>
         <property name="do.depend" location="false"/>
         <property name="do.jar" location="true"/>
+        <property name="libsdone" location="true"/>
         <property name="javac.classpath" location="${toString:jars}"/>
       </ant>
     </presetdef>
