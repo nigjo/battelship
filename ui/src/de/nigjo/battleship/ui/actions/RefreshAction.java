@@ -25,9 +25,9 @@ import java.awt.event.ActionEvent;
 import javax.swing.Icon;
 
 import de.nigjo.battleship.BattleshipGame;
+import de.nigjo.battleship.api.StatusDisplayer;
 import de.nigjo.battleship.data.Savegame;
 import de.nigjo.battleship.ui.ActionBase;
-import de.nigjo.battleship.ui.StatusLine;
 import de.nigjo.battleship.util.Bundle;
 import de.nigjo.battleship.util.Storage;
 
@@ -50,19 +50,19 @@ public class RefreshAction extends ActionBase
     Savegame savegame = game.getData(Savegame.class);
     if(savegame == null || savegame.getFilename() == null)
     {
-      StatusLine.getDefault().setText("Keinen Spielstand gefunden.");
+      StatusDisplayer.getDefault().setText("Keinen Spielstand gefunden.");
     }
     else
     {
       try
       {
-        StatusLine.getDefault().setText("Lade Spielstanddatei neu ein.");
+        StatusDisplayer.getDefault().setText("Lade Spielstanddatei neu ein.");
         LoadGameAction.loadGame(savegame.getFilename());
       }
       catch(IOException ex)
       {
         Logger.getLogger(RefreshAction.class.getName()).log(Level.SEVERE, null, ex);
-        StatusLine.getDefault().setText(
+        StatusDisplayer.getDefault().setText(
             ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage());
       }
     }

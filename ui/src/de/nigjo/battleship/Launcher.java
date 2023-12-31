@@ -138,14 +138,14 @@ public class Launcher
     }
     catch(RuntimeException ex)
     {
-      StatusLine.getDefault().setText(
+      StatusDisplayer.getDefault().setText(
           ex.getClass().getSimpleName()
           + ": " + ex.getLocalizedMessage());
       ex.printStackTrace(System.err);
     }
     catch(IOException ex)
     {
-      StatusLine.getDefault().setText("FEHLER: " + ex.getLocalizedMessage());
+      StatusDisplayer.getDefault().setText("FEHLER: " + ex.getLocalizedMessage());
     }
   }
 
@@ -204,7 +204,7 @@ public class Launcher
             stateModifier.apply(BattleshipGame.STATE_WAIT_START)
         ), stateModifier);
 
-    StatusLine.getDefault().setText("Willkommen zu Schiffe versenken");
+    StatusDisplayer.getDefault().setText("Willkommen zu Schiffe versenken");
   }
 
   private static void addObververStatus(BattleshipGame game,
@@ -216,15 +216,15 @@ public class Launcher
   private static void addObververStatus(BattleshipGame game,
       String key, int pos, int width, UnaryOperator<String> statusModifier)
   {
-    StatusLine.getDefault().createStatus(key, pos, width);
-    StatusLine.getDefault().setStatus(key,
+    StatusLine uiStatus = (StatusLine)StatusDisplayer.getDefault();
+    uiStatus.createStatus(key, pos, width);
+    uiStatus.setStatus(key,
         statusModifier.apply(game.getDataString(key)));
     game.addPropertyChangeListener(key,
-        pce -> StatusLine.getDefault()
-            .setStatus(key,
-                statusModifier.apply(
-                    Objects.toString(pce.getNewValue(), null)
-                ))
+        pce -> uiStatus.setStatus(key,
+            statusModifier.apply(
+                Objects.toString(pce.getNewValue(), null)
+            ))
     );
   }
 

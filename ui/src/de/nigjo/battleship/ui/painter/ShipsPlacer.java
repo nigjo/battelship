@@ -26,11 +26,11 @@ import java.awt.event.MouseEvent;
 import javax.swing.UIManager;
 
 import de.nigjo.battleship.BattleshipGame;
+import de.nigjo.battleship.api.StatusDisplayer;
 import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.KeyManager;
 import de.nigjo.battleship.data.Savegame;
 import de.nigjo.battleship.ui.OceanBoard;
-import de.nigjo.battleship.ui.StatusLine;
 import de.nigjo.battleship.util.Storage;
 
 /**
@@ -107,7 +107,7 @@ public class ShipsPlacer extends InteractivePainter
     }
     catch(IllegalArgumentException ex)
     {
-      StatusLine.getDefault().setText(ex.getLocalizedMessage());
+      StatusDisplayer.getDefault().setText(ex.getLocalizedMessage());
     }
   }
 

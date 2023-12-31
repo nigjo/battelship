@@ -24,11 +24,11 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 
 import de.nigjo.battleship.BattleshipGame;
+import de.nigjo.battleship.api.StatusDisplayer;
 import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.KeyManager;
 import de.nigjo.battleship.data.Savegame;
 import de.nigjo.battleship.ui.OceanBoard;
-import de.nigjo.battleship.ui.StatusLine;
 import de.nigjo.battleship.util.Storage;
 
 /**
@@ -54,7 +54,7 @@ public class AttackSelection extends InteractivePainter
     Point selectedCell = getSelectedCell();
     String message = "Attacke auf "
         + Character.toString('A' + selectedCell.x) + (selectedCell.y + 1);
-    StatusLine.getDefault().setText(message);
+    StatusDisplayer.getDefault().setText(message);
     withBoard(board ->
     {
       board.shootAt(selectedCell.x, selectedCell.y);

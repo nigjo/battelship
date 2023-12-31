@@ -28,12 +28,12 @@ import javax.swing.Icon;
 import javax.swing.JFileChooser;
 
 import de.nigjo.battleship.BattleshipGame;
+import de.nigjo.battleship.api.StatusDisplayer;
 import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.GamePlayback;
 import de.nigjo.battleship.data.KeyManager;
 import de.nigjo.battleship.data.Savegame;
 import de.nigjo.battleship.ui.ActionBase;
-import de.nigjo.battleship.ui.StatusLine;
 import de.nigjo.battleship.util.Bundle;
 import de.nigjo.battleship.util.Storage;
 
@@ -57,7 +57,7 @@ public class LoadGameAction extends ActionBase
       }
       catch(IOException ex)
       {
-        StatusLine.getDefault().setText("FEHLER: " + ex.getLocalizedMessage());
+        StatusDisplayer.getDefault().setText("FEHLER: " + ex.getLocalizedMessage());
       }
     }
   }
@@ -86,12 +86,12 @@ public class LoadGameAction extends ActionBase
     KeyManager km = game.getData(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
     if(player1key.equals(km.getPublicKey()))
     {
-      StatusLine.getDefault().setText("Willkommen Spieler 1");
+      StatusDisplayer.getDefault().setText("Willkommen Spieler 1");
       game.putData(BattleshipGame.KEY_PLAYER_NUM, 1);
       loadBoardForPlayer(1, savegame, km, game);
       if(player2key == null)
       {
-        StatusLine.getDefault().setText("Warte auf Spieler 2");
+        StatusDisplayer.getDefault().setText("Warte auf Spieler 2");
       }
       else
       {
@@ -103,7 +103,7 @@ public class LoadGameAction extends ActionBase
                 .findFirst().isPresent();
         if(!hasPlacedShipsForPlayer2)
         {
-          StatusLine.getDefault().setText("Spieler 2 noch nicht bereit.");
+          StatusDisplayer.getDefault().setText("Spieler 2 noch nicht bereit.");
           game.updateState(BattleshipGame.STATE_WAIT_START);
         }
         else
@@ -132,7 +132,7 @@ public class LoadGameAction extends ActionBase
       if(player2key == null)
       {
         //Noch kein Playerkey. Wir sind Spieler 2
-        StatusLine.getDefault().setText("Willkommen Spieler 2");
+        StatusDisplayer.getDefault().setText("Willkommen Spieler 2");
         game.putData(BattleshipGame.KEY_PLAYER_NUM, 2);
         //nur Spieler 1 vorhanden. Spieler 2 (wir) am Zug
         game.clearBoards();
@@ -142,7 +142,7 @@ public class LoadGameAction extends ActionBase
       else if(player2key.equals(km.getPublicKey()))
       {
         //Wir sind dem Spiel bereits beigetreten.
-        StatusLine.getDefault().setText("Willkommen Spieler 2");
+        StatusDisplayer.getDefault().setText("Willkommen Spieler 2");
         game.putData(BattleshipGame.KEY_PLAYER_NUM, 2);
         if(!loadBoardForPlayer(2, savegame, km, game))
         {
@@ -168,7 +168,7 @@ public class LoadGameAction extends ActionBase
       }
       else
       {
-        StatusLine.getDefault().setText("Das Spiel hat bereits 2 Spieler.");
+        StatusDisplayer.getDefault().setText("Das Spiel hat bereits 2 Spieler.");
         game.clearBoards();
       }
     }
