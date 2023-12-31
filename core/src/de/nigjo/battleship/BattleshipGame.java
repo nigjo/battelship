@@ -16,11 +16,14 @@
 package de.nigjo.battleship;
 
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -271,6 +274,27 @@ public final class BattleshipGame
     BoardData opponent = BoardData.generateRandom(size, rnd, ships);
     opponent.setOpponent(true);
     gamedata.put(BoardData.KEY_OPPONENT, opponent);
+  }
+
+  public void createNewGame(Path savegameFile) throws IOException
+  {
+    Savegame savegame = Savegame.createNew();
+
+    Map<String, String> orderedConfig = new TreeMap<>();
+    this.getAllData(BattleshipGame.Config.class)
+        .forEach(cfg -> orderedConfig.put(cfg.getKey(), cfg.getValue()));
+    orderedConfig.forEach(savegame::setConfig);
+
+    KeyManager km = this.getData(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
+    savegame.addRecord(Savegame.Record.PLAYER, 1, km.getPublicKey());
+
+    savegame.storeToFile(savegameFile);
+    this.putData(Savegame.class.getName(), savegame);
+
+    this.clearBoards();
+    this.putData(BattleshipGame.KEY_PLAYER_NUM, 1);
+
+    this.updateState(BattleshipGame.STATE_PLACEMENT);
   }
 
   public void updateState()
