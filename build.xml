@@ -1,19 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Battleship-root" default="create-release" basedir=".">
+<project name="Battleship-root" default="build" basedir=".">
   <target name="-root-init">
+    <path id="jars" >
+      <fileset dir="dist" includes="*.jar" erroronmissingdir="false"/>
+    </path>
     <presetdef name="subbuild">
-      <ant inheritall="false" inheritrefs="false">
+      <ant inheritall="false" inheritrefs="false" fork="true">
         <property name="dist.dir" location="dist"/>
+        <property name="javac.classpath" location="${toString:jars}"/>
       </ant>
     </presetdef>
   </target>
-  <target name="clean-all" depends="-root-init">
+
+  <target name="clean" depends="-root-init">
+    <subbuild dir="ui" target="clean"/>
     <subbuild dir="core" target="clean"/>
   </target>
-  <target name="create-release" depends="-root-init">
-    
-    <mkdir dir="dist"/>
-    <subbuild dir="core" target="default"/>
 
+  <target name="build" depends="-root-init">
+    <mkdir dir="dist"/>
+    <subbuild dir="core" target="jar"/>
+    <subbuild dir="ui" target="jar"/>
   </target>
+  
+  <target name="create-release" depends="clean,build"
+          description="clean and build all"/>
 </project>
