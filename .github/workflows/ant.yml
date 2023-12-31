@@ -22,7 +22,7 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
     - name: Build with Ant
-      run: ant -noinput -buildfile build.xml
+      run: ant -noinput -buildfile build.xml -logger org.apache.tools.ant.NoBannerLogger
     - name: Archive Artefacts
       uses: actions/upload-artifact@v3
       with:
