@@ -5,7 +5,7 @@
       <fileset dir="dist" includes="*.jar" erroronmissingdir="false"/>
     </path>
     <presetdef name="subbuild">
-      <ant inheritall="false" inheritrefs="false" fork="true">
+      <ant inheritall="false" inheritrefs="false">
         <property name="dist.dir" location="dist"/>
         <property name="javac.classpath" location="${toString:jars}"/>
       </ant>
