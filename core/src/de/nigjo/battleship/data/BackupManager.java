@@ -26,17 +26,22 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import de.nigjo.battleship.CliArg;
-
 /**
  *
  * @author nigjo
  */
 public class BackupManager
 {
+  private static boolean active = false;
+
+  public static void setActive(boolean active)
+  {
+    BackupManager.active = active;
+  }
+
   static void backup(Savegame savegame) throws IOException
   {
-    if(CliArg.backup.isDefined())
+    if(active)
     {
       Path filename = savegame.getFilename();
       String basefile = filename.getFileName().toString();
