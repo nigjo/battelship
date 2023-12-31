@@ -21,10 +21,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static de.nigjo.battleship.BattleshipGame.*;
+import de.nigjo.battleship.api.StatusDisplayer;
 import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.KeyManager;
 import de.nigjo.battleship.data.Savegame;
-import de.nigjo.battleship.ui.StatusLine;
 
 /**
  *
@@ -94,7 +94,7 @@ public class StateObserver implements PropertyChangeListener
         break;
       case STATE_WAIT_ATTACK:
         //Warten auf einen Schuss
-        StatusLine.getDefault().setText("Warte auf einen Schuß aus dem Gegenergebiet.");
+        StatusDisplayer.getDefault().setText("Warte auf einen Schuß aus dem Gegenergebiet.");
         game.putData(KEY_PLAYER, PLAYER_OPPONENT);
         break;
       case STATE_ATTACKED:
@@ -161,7 +161,7 @@ public class StateObserver implements PropertyChangeListener
     Logger.getLogger(BattleshipGame.class.getName())
         .log(Level.INFO, "{0}", message);
 
-    StatusLine.getDefault().setText(message);
+    StatusDisplayer.getDefault().setText(message);
     savegame.addRecord(Savegame.Record.MESSAGE, playerSelf, message);
 
     KeyManager other = game.getData(KeyManager.KEY_MANAGER_OPPONENT, KeyManager.class);
