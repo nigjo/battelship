@@ -28,6 +28,6 @@ public interface StatusDisplayer
     return Storage.getDefault().get(StatusDisplayer.class);
   }
 
-  public void setText(String warte_auf_einen_Schuß_aus_dem_Gegenergebi);
+  public void setText(String message);
 
 }
