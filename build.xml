@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Battleship-root" default="create-release" basedir=".">
+  <target name="-root-init">
+    <presetdef name="subbuild">
+      <ant inheritall="false" inheritrefs="false">
+        <property name="dist.dir" location="dist"/>
+      </ant>
+    </presetdef>
+  </target>
+  <target name="clean-all" depends="-root-init">
+    <subbuild dir="core" target="clean"/>
+  </target>
+  <target name="create-release" depends="-root-init">
+    
+    <mkdir dir="dist"/>
+    <subbuild dir="core" target="default"/>
+
+  </target>
+</project>
