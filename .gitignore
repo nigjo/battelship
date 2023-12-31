@@ -4,3 +4,4 @@
 **/dist/
 /battleship.player.id
 /battleship-debug.log
+/lib
