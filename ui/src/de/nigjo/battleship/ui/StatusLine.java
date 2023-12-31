@@ -35,13 +35,13 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-import de.nigjo.battleship.util.Storage;
+import de.nigjo.battleship.api.StatusDisplayer;
 
 /**
  *
  * @author nigjo
  */
-public class StatusLine extends JPanel
+public class StatusLine extends JPanel implements StatusDisplayer
 {
   private static final long SECONDS_TO_FADE = 5l;
   private static final String NBSP = "\u00A0";
@@ -67,12 +67,15 @@ public class StatusLine extends JPanel
     });
   }
 
+  @Deprecated
   public static StatusLine getDefault()
   {
-    return Storage.getDefault()
-        .getOrSet(StatusLine.class.getName(), StatusLine.class, StatusLine::new);
+    return (StatusLine)StatusDisplayer.getDefault();
+//    return Storage.getDefault()
+//        .getOrSet(StatusLine.class.getName(), StatusLine.class, StatusLine::new);
   }
 
+  @Override
   public void setText(String message)
   {
     text.setText((message == null || message.isBlank()) ? NBSP : message);

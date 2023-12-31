@@ -37,6 +37,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
+import de.nigjo.battleship.api.StatusDisplayer;
 import de.nigjo.battleship.ui.DialogDisplayer;
 import de.nigjo.battleship.ui.GameBoard;
 import de.nigjo.battleship.ui.StatusLine;
@@ -172,7 +173,9 @@ public class Launcher
         Storage.getDefault().get(BattleshipGame.class.getName(), BattleshipGame.class);
 
     frame.getContentPane().add(new GameBoard(game));
-    frame.getContentPane().add(StatusLine.getDefault(), BorderLayout.PAGE_END);
+    StatusLine status = new StatusLine();
+    Storage.getDefault().put(StatusDisplayer.class.getName(), status);
+    frame.getContentPane().add(status, BorderLayout.PAGE_END);
 
     JMenuBar menu = new JMenuBar();
     frame.setJMenuBar(menu);
