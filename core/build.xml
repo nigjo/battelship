@@ -71,33 +71,4 @@
 
   -->
     
-  <target name="-check-actions" depends="init">
-    <fileset dir="${build.classes.dir}" includes="**/*Action.class" id="actionClasses"/>
-    <property location="${build.classes.dir}" name="build.classes.dir.resolved"/>
-    <property  name="actionServicesFile"
-               value="${build.classes.dir}/META-INF/services/de.nigjo.battleship.ui.ActionBase"/>
-    <uptodate targetfile="${actionServicesFile}" property="uptodateActions">
-      <srcfiles refid="actionClasses"/>
-    </uptodate>
-  </target>
-  <target name="-post-compile" depends="-check-actions" unless="uptodateActions">
-    <echo level="info">updating services</echo>
-    <pathconvert pathsep="${line.separator}" dirsep="." property="actionFQNs">
-      <fileset refid="actionClasses"/>
-      <chainedmapper>
-        <globmapper from="${build.classes.dir.resolved}${file.separator}*" to="*"/>
-        <globmapper from="*.class" to="*"/>
-      </chainedmapper>
-    </pathconvert>
-    <echo file="${actionServicesFile}"
-          message="${actionFQNs}"/>
-  </target>
-  
-  <target name="-post-jar">
-    <java jar="${dist.jar}" fork="true" logerror="true">
-      <sysproperty key="file.encoding" value="UTF-8"/>
-      <sysproperty key="java.awt.headless" value="true"/>
-      <arg value="--help"/>
-    </java>
-  </target>
 </project>
