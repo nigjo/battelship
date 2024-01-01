@@ -20,10 +20,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import org.junit.jupiter.api.Assertions;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.KeyManager;
@@ -34,45 +38,59 @@ import de.nigjo.battleship.data.KeyManager;
  */
 public class BattleshipGameTest
 {
-
-  public BattleshipGameTest()
-  {
-  }
-
   @BeforeAll
   public static void createPlayerIds() throws IOException
   {
     Path p1 = Path.of("player1.id");
     Files.deleteIfExists(p1);
     KeyManager km1 = new KeyManager(p1);
+    p1.toFile().deleteOnExit();
     Path p2 = Path.of("player2.id");
     Files.deleteIfExists(p2);
     KeyManager km2 = new KeyManager(p2);
+    p2.toFile().deleteOnExit();
   }
 
-  //@Test
+  private Path playerId;
+
+  @BeforeEach
+  public void initTestId(TestInfo info) throws IOException
+  {
+    String name = info.getDisplayName()
+        .replace("()", "")
+        .replaceAll("[^\\w.-]", "_");
+    playerId = Path.of("player-" + name + ".id");
+    Files.deleteIfExists(playerId);
+    playerId.toFile().deleteOnExit();
+  }
+
+  @Test
   public void testSetConfig()
   {
-    System.out.println("setConfig");
-    String key = "";
-    String value = "";
-    BattleshipGame instance = null;
-    instance.setConfig(key, value);
-    // TODO review the generated test code and remove the default call to fail.
-    fail("The test case is a prototype.");
+    String key = "sampleConfig";
+    String value = "23";
+    BattleshipGame game = new BattleshipGame(playerId);
+
+    game.setConfig(key, value);
+
+    Object data = game.getData("config.sampleConfig", Object.class);
+    Assertions.assertInstanceOf(BattleshipGame.Config.class, data);
+    BattleshipGame.Config cfg = (BattleshipGame.Config)data;
+    assertEquals("sampleConfig", cfg.getKey());
+    assertEquals("23", cfg.getValue());
   }
 
-  //@Test
+  @Test
   public void testGetConfig()
   {
-    System.out.println("getConfig");
-    String key = "";
-    BattleshipGame instance = null;
-    Optional<BattleshipGame.Config> expResult = null;
+    String key = "size";
+    BattleshipGame instance = new BattleshipGame(playerId);
+
     Optional<BattleshipGame.Config> result = instance.getConfig(key);
-    assertEquals(expResult, result);
-    // TODO review the generated test code and remove the default call to fail.
-    fail("The test case is a prototype.");
+    assertNotNull(result.get());
+
+    assertEquals("size", result.get().getKey());
+    assertEquals("10", result.get().getValue());
   }
 
   //@Test
@@ -102,7 +120,6 @@ public class BattleshipGameTest
   @Test
   public void testInitRandom()
   {
-    Path playerId = Path.of("player-initRandom.id");
     BattleshipGame instance = new BattleshipGame(playerId);
     instance.initRandom();
 
@@ -122,28 +139,59 @@ public class BattleshipGameTest
     assertEquals(17, shipCells);
   }
 
-  //@Test
-  public void testInitRandom_long()
+  @Test
+  public void testInitRandomWithSeed()
   {
-    System.out.println("initRandom");
-    long seed = 0L;
-    BattleshipGame instance = null;
-    instance.initRandom(seed);
-    // TODO review the generated test code and remove the default call to fail.
-    fail("The test case is a prototype.");
+    long seed = 8_374_564_356L;
+    BattleshipGame game = new BattleshipGame(playerId);
+    game.initRandom(seed);
+
+    String expected = ""
+        + "N........."
+        + "V........."
+        + "V....WHE.."
+        + "V..N......"
+        + "S..V......"
+        + "...S......"
+        + "..WHHE...."
+        + "....N....."
+        + "....S....."
+        + "..........";
+
+    BoardData self = game.getData(BoardData.KEY_SELF, BoardData.class);
+    assertEquals(expected, self.toString());
   }
 
-  //@Test
-  public void testInitRandom_3args()
+  @Test
+  public void testInitRandomCustomConfig()
   {
     System.out.println("initRandom");
-    long seed = 0L;
-    int size = 0;
-    int[] ships = null;
-    BattleshipGame instance = null;
-    instance.initRandom(seed, size, ships);
-    // TODO review the generated test code and remove the default call to fail.
-    fail("The test case is a prototype.");
+    long seed = 87_356_238_745L;
+    int size = 12;
+    int[] ships =
+    {
+      7, 6, 5, 4, 3
+    };
+
+    String expected = ""
+        + "............"
+        + ".N...WHHHHE."
+        + ".V.........."
+        + ".S.........."
+        + "....WHHHHHE."
+        + ".......WHHHE"
+        + "............"
+        + "........N..."
+        + "........V..."
+        + "........V..."
+        + "........S..."
+        + "............";
+
+    BattleshipGame game = new BattleshipGame(playerId);
+    game.initRandom(seed, size, ships);
+
+    BoardData self = game.getData(BoardData.KEY_SELF, BoardData.class);
+    assertEquals(expected, self.toString());
   }
 
   //@Test
