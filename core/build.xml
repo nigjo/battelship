@@ -78,18 +78,21 @@
   <target name="-do-test-run">
     <!-- Run JUnit5 -->
     <mkdir dir="${basedir}/build/test/work"/>
-    <java dir="${basedir}/build/test/work"  failonerror="false"
+    <echo>CP:${run.test.classpath}</echo>
+    <java dir="${basedir}/build/test/work"  failonerror="false" fork="true"
           resultproperty="junitrc" classpath="${run.test.classpath}"
           classname="org.junit.platform.console.ConsoleLauncher">
       <arg value="--scan-classpath"/>
       <arg line="--reports-dir"/>
       <arg file="build/test/results"/>
     </java>
+    <echo>RC:${junitrc}</echo>
     <condition property="tests.failed">
       <not>
         <equals arg1="0" arg2="${junitrc}"/>
       </not>
     </condition>
+    <echo>failed:${tests.failed}</echo>
   </target>
   <target name="test-report">
     <junitreport todir="build/test/results">
