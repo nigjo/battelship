@@ -100,12 +100,14 @@
   </target>
   
   <target name="-post-jar">
-    <echo></echo>
-    <java classname="${main.class}" fork="true" logerror="true">
+    <java classname="${main.class}" fork="true" logerror="true"
+          output="${dist.dir}/syntax.txt" append="false">
       <sysproperty key="file.encoding" value="UTF-8"/>
       <sysproperty key="java.awt.headless" value="true"/>
       <classpath path="${javac.classpath}:${dist.jar}"/>
       <arg value="--help"/>
     </java>
+    <loadfile srcfile="${dist.dir}/syntax.txt" property="syntaxContent"/>
+    <echo level="info" taskname="clihelp" message="${syntaxContent}"/>
   </target>
 </project>
