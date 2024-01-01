@@ -2,14 +2,14 @@
 <project name="Battleship-root" default="build" basedir=".">
   <target name="-root-init" depends="download-libraries">
     <path id="jars" >
-      <fileset dir="dist" includes="*.jar" erroronmissingdir="false"/>
+      <fileset dir="dist" includes="**/*.jar" erroronmissingdir="false"/>
     </path>
     <presetdef name="subbuild">
       <ant inheritall="false" inheritrefs="false">
         <property name="dist.dir" location="dist"/>
         <property name="do.depend" location="false"/>
         <property name="do.jar" location="true"/>
-        <property name="libsdone" location="true"/>
+        <property name="libsdone" value="true"/>
         <property name="javac.classpath" location="${toString:jars}"/>
       </ant>
     </presetdef>
@@ -24,12 +24,28 @@
     <mkdir dir="dist"/>
     <subbuild dir="core" target="jar"/>
     <subbuild dir="ui" target="jar"/>
+
+    <pathconvert property="winClasspath" pathsep=";" dirsep="\">
+      <path refid="jars"/>
+      <globmapper from="${basedir}${file.separator}dist${file.separator}*" to="%~dp0*"/>
+    </pathconvert>
+
+    <echo file="dist/BattleShip.cmd"><![CDATA[@echo off
+setlocal
+set "BATTLESHIP_cp=${winClasspath}"
+if not defined JAVA_HOME (
+  for /F "delims=*" %%J in ('where javaw.exe') do (
+    if exist "%%~dpJ..\bin\javaw.exe" set "JAVA_HOME=%%~dpJ.."
+  )
+)
+"%JAVA_HOME%\bin\java.exe" -cp "%BATTLESHIP_cp%" de.nigjo.battleship.Launcher %*
+]]></echo>
   </target>
 
   <target name="create-release" depends="clean,build"
           description="clean and build all"/>
 
-  <target name="-init-download" unless="libsdone">
+  <target name="-init-download" unless="${libsdone}">
     <property name="baseurl" value="https://repo1.maven.org/maven2"/>
 
     <macrodef name="download">
@@ -65,14 +81,18 @@
         <downloads/>
         <property name="libs.@{name}.displayName" value="@{displayName} ${@{name}.version}"/>
         <pathconvert property="libs.@{name}.classpath">
-          <fileset dir="lib" includes="**/@{jarbase}-*.jar"/>
+          <fileset dir="lib" includes="**/@{jarbase}-*@{version}.jar"/>
           <globmapper from="${basedir}*" to="..*"/>
         </pathconvert>
       </sequential>
     </macrodef>
 
+    <uptodate targetfile="lib/nblibraries.properties" srcfile="${ant.file.Battleship-root}"
+              property="libsdone"/>
+
   </target>
-  <target name="download-libraries" depends="-init-download" unless="libsdone">
+  <target name="download-libraries" depends="-init-download" unless="${libsdone}">
+    <property name="libsdone" value="true"/>
 
     <!-- - - - - - - - - - - - - - - - - - - - - - - - - - -->
     <library name="apiguardian" version="1.1.2"
