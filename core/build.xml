@@ -75,16 +75,23 @@
     <ant dir=".." target="download-libraries"/>
   </target>
 
-  <target name="test" depends="compile-test,-pre-test-run">
+  <target name="-do-test-run">
     <!-- Run JUnit5 -->
     <mkdir dir="${basedir}/build/test/work"/>
-    <java dir="${basedir}/build/test/work"  failonerror="false" errorproperty="junitrc"
-          classpath="${run.test.classpath}"
+    <java dir="${basedir}/build/test/work"  failonerror="false"
+          resultproperty="junitrc" classpath="${run.test.classpath}"
           classname="org.junit.platform.console.ConsoleLauncher">
       <arg value="--scan-classpath"/>
       <arg line="--reports-dir"/>
       <arg file="build/test/results"/>
     </java>
+    <condition property="tests.failed">
+      <not>
+        <equals arg1="0" arg2="${junitrc}"/>
+      </not>
+    </condition>
+  </target>
+  <target name="test-report">
     <junitreport todir="build/test/results">
       <fileset dir="build/test/results">
         <include name="TEST-*.xml"/>
