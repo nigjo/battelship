@@ -22,8 +22,16 @@
 
   <target name="build" depends="-root-init">
     <mkdir dir="dist"/>
-    <subbuild dir="core" target="jar"/>
-    <subbuild dir="ui" target="jar"/>
+    <subbuild dir="core">
+      <target name="test"/>
+      <target name="jar"/>
+      <target name="javadoc"/>
+    </subbuild>
+    <subbuild dir="ui">
+      <target name="test"/>
+      <target name="jar"/>
+      <target name="javadoc"/>
+    </subbuild>
 
     <pathconvert property="winClasspath" pathsep=";" dirsep="\">
       <path refid="jars"/>
