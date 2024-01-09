@@ -35,8 +35,7 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 
 import de.nigjo.battleship.BattleshipGame;
-import de.nigjo.battleship.ui.StatusLine;
-import de.nigjo.battleship.ui.actions.LoadGameAction;
+import de.nigjo.battleship.api.StatusDisplayer;
 import de.nigjo.battleship.util.Storage;
 
 /**
@@ -131,13 +130,13 @@ public class SavegameManager implements Closeable
               {
                 Logger.getLogger(SavegameManager.class.getName())
                     .log(Level.FINE, "change detected.");
-                StatusLine.getDefault().setText("Gegner hat gespielt.");
+                StatusDisplayer.getDefault().setText("Gegner hat gespielt.");
                 reloader = () ->
                 {
                   reloader = null;
                   Logger.getLogger(SavegameManager.class.getName())
                       .log(Level.FINE, "reload savegame");
-                  StatusLine.getDefault().setText("Spiel wird aktualisiert...");
+                  StatusDisplayer.getDefault().setText("Spiel wird aktualisiert...");
                   SwingUtilities.invokeLater(this::reloadSavegame);
                 };
                 updater.schedule(reloader, 1, TimeUnit.SECONDS);
@@ -245,7 +244,7 @@ public class SavegameManager implements Closeable
     Logger.getLogger(SavegameManager.class.getName())
         .log(Level.FINER, "register new manager");
     SavegameManager manager = new SavegameManager(
-        savegameFile, LoadGameAction::loadGame);
+        savegameFile, game::loadGame);
     game.putData(SavegameManager.class.getName(), manager);
   }
 

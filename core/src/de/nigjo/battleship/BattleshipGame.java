@@ -18,9 +18,11 @@ package de.nigjo.battleship;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Random;
 import java.util.TreeMap;
@@ -34,9 +36,12 @@ import java.awt.GraphicsEnvironment;
 
 import javax.swing.SwingUtilities;
 
+import de.nigjo.battleship.api.StatusDisplayer;
 import de.nigjo.battleship.data.BoardData;
+import de.nigjo.battleship.data.GamePlayback;
 import de.nigjo.battleship.data.KeyManager;
 import de.nigjo.battleship.data.Savegame;
+import de.nigjo.battleship.data.SavegameManager;
 import de.nigjo.battleship.util.Storage;
 
 /**
@@ -82,6 +87,7 @@ public final class BattleshipGame
     {
       return value;
     }
+
   }
 
   public BattleshipGame(Path playerId)
@@ -295,6 +301,174 @@ public final class BattleshipGame
     this.putData(BattleshipGame.KEY_PLAYER_NUM, 1);
 
     this.updateState(BattleshipGame.STATE_PLACEMENT);
+  }
+
+  public void loadGame(Path saveGameFile) throws IOException
+  {
+
+    Savegame savegame = Savegame.readFromFile(saveGameFile);
+    this.putData(Savegame.class.getName(), savegame);
+
+    String player1key =
+        savegame.records(1, Savegame.Record.PLAYER)
+            .findFirst().orElseThrow()
+            .getPayload();
+    String player2key =
+        savegame.records(2, Savegame.Record.PLAYER)
+            .findFirst()
+            .map(Savegame.Record::getPayload)
+            .orElse(null);
+
+    KeyManager km = this.getData(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
+    if(player1key.equals(km.getPublicKey()))
+    {
+      StatusDisplayer.getDefault().setText("Willkommen Spieler 1");
+      this.putData(BattleshipGame.KEY_PLAYER_NUM, 1);
+      loadBoardForPlayer(1, savegame, km);
+      if(player2key == null)
+      {
+        StatusDisplayer.getDefault().setText("Warte auf Spieler 2");
+      }
+      else
+      {
+        KeyManager opponent = new KeyManager(player2key);
+        this.putData(KeyManager.KEY_MANAGER_OPPONENT, opponent);
+
+        boolean hasPlacedShipsForPlayer2 =
+            savegame.records(2, Savegame.Record.BOARD)
+                .findFirst().isPresent();
+        if(!hasPlacedShipsForPlayer2)
+        {
+          StatusDisplayer.getDefault().setText("Spieler 2 noch nicht bereit.");
+          this.updateState(BattleshipGame.STATE_WAIT_START);
+        }
+        else
+        {
+          try
+          {
+            GamePlayback
+                .from(savegame)
+                .asPlayer(1)
+                .with(km)
+                .to(this.getData(BoardData.KEY_SELF, BoardData.class));
+            GamePlayback
+                .from(savegame)
+                .asPlayer(1)
+                .with(km)
+                .to(this.getData(BoardData.KEY_OPPONENT, BoardData.class));
+          }
+          catch(IllegalArgumentException ex)
+          {
+            if(ex.getCause() instanceof GeneralSecurityException)
+            {
+              throw new IOException(ex.getCause());
+            }
+            else
+            {
+              throw ex;
+            }
+          }
+
+          //TODO:savegame.playbackTo(gamedata, km, 2);
+          this.updateState();
+        }
+      }
+    }
+    else
+    {
+      KeyManager opponent = new KeyManager(player1key);
+      this.putData(KeyManager.KEY_MANAGER_OPPONENT, opponent);
+
+      if(player2key == null)
+      {
+        //Noch kein Playerkey. Wir sind Spieler 2
+        StatusDisplayer.getDefault().setText("Willkommen Spieler 2");
+        this.putData(BattleshipGame.KEY_PLAYER_NUM, 2);
+        //nur Spieler 1 vorhanden. Spieler 2 (wir) am Zug
+        this.clearBoards();
+        savegame.addRecord(Savegame.Record.PLAYER, 2, km.getPublicKey());
+        this.updateState(BattleshipGame.STATE_PLACEMENT);
+      }
+      else if(player2key.equals(km.getPublicKey()))
+      {
+        //Wir sind dem Spiel bereits beigetreten.
+        StatusDisplayer.getDefault().setText("Willkommen Spieler 2");
+        this.putData(BattleshipGame.KEY_PLAYER_NUM, 2);
+        if(!loadBoardForPlayer(2, savegame, km))
+        {
+          // noch keine Schiffe platziert. Wir sind dran.
+          this.clearBoards();
+          this.updateState(BattleshipGame.STATE_PLACEMENT);
+        }
+        else
+        {
+          try
+          {
+            GamePlayback
+                .from(savegame)
+                .asPlayer(2)
+                .with(km)
+                .to(this.getData(BoardData.KEY_SELF, BoardData.class));
+            GamePlayback
+                .from(savegame)
+                .asPlayer(2)
+                .with(km)
+                .to(this.getData(BoardData.KEY_OPPONENT, BoardData.class));
+          }
+          catch(IllegalArgumentException ex)
+          {
+            if(ex.getCause() instanceof GeneralSecurityException)
+            {
+              throw new IOException(ex.getCause());
+            }
+            else
+            {
+              throw ex;
+            }
+          }
+
+          this.updateState();
+        }
+      }
+      else
+      {
+        StatusDisplayer.getDefault().setText("Das Spiel hat bereits 2 Spieler.");
+        this.clearBoards();
+        return;
+      }
+    }
+    SavegameManager.register(this, saveGameFile);
+  }
+
+  private boolean loadBoardForPlayer(int player,
+      Savegame savegame, KeyManager km)
+  {
+    try
+    {
+      String encodedBoard =
+          savegame.records(player, Savegame.Record.BOARD)
+              .findFirst()
+              .orElseThrow()
+              .getPayload();
+      String boarddata = km.decode(encodedBoard);
+      if(boarddata == null)
+      {
+        throw new IllegalArgumentException(
+            "board data for player " + player + " could not be decoded");
+      }
+      BoardData parsed = BoardData.parse(boarddata);
+      this.putData(BoardData.KEY_SELF, parsed);
+    }
+    catch(NoSuchElementException noboard)
+    {
+      return false;
+    }
+
+    //2.Board ist anfangs immer "leer".
+    this.clearBoard(true);
+
+    this.putData(BattleshipGame.KEY_PLAYER_NUM, player);
+    return true;
   }
 
   public void updateState()
