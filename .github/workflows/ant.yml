@@ -9,6 +9,11 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
 jobs:
   build:
 
@@ -22,7 +27,7 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
     - name: Build with Ant
-      run: ant -noinput -buildfile build.xml
+      run: ant -noinput -buildfile build.xml -logger org.apache.tools.ant.NoBannerLogger
     - name: Archive Artefacts
       uses: actions/upload-artifact@v3
       with:
@@ -30,4 +35,11 @@ jobs:
         path: |
           dist
           !dist/javadoc/**
-      
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: success() || failure()    # run this step even if previous step failed
+      with:
+        name: JUnit Tests            # Name of the check run which will be created
+        path: core/build/test/results/TEST-*.xml    # Path to test results
+        reporter: java-junit        # Format of test results
+

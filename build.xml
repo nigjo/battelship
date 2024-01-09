@@ -1,103 +1,148 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- You may freely edit this file. See commented blocks below for -->
-<!-- some examples of how to customize the build. -->
-<!-- (If you delete it and reopen the project it will be recreated.) -->
-<!-- By default, only the Clean and Build commands use this build script. -->
-<!-- Commands such as Run, Debug, and Test only use this build script if -->
-<!-- the Compile on Save feature is turned off for the project. -->
-<!-- You can turn off the Compile on Save (or Deploy on Save) setting -->
-<!-- in the project's Project Properties dialog box.-->
-<project name="BattleShip" default="default" basedir=".">
-  <description>Builds, tests, and runs the project BattleShip.</description>
-  <import file="nbproject/build-impl.xml"/>
-  <!--
-
-  There exist several targets which are by default empty and which can be 
-  used for execution of your tasks. These targets are usually executed 
-  before and after some main targets. They are: 
-
-    -pre-init:                 called before initialization of project properties
-    -post-init:                called after initialization of project properties
-    -pre-compile:              called before javac compilation
-    -post-compile:             called after javac compilation
-    -pre-compile-single:       called before javac compilation of single file
-    -post-compile-single:      called after javac compilation of single file
-    -pre-compile-test:         called before javac compilation of JUnit tests
-    -post-compile-test:        called after javac compilation of JUnit tests
-    -pre-compile-test-single:  called before javac compilation of single JUnit test
-    -post-compile-test-single: called after javac compilation of single JUunit test
-    -pre-jar:                  called before JAR building
-    -post-jar:                 called after JAR building
-    -post-clean:               called after cleaning build products
-
-  (Targets beginning with '-' are not intended to be called on their own.)
-
-  Example of inserting an obfuscator after compilation could look like this:
-
-      <target name="-post-compile">
-          <obfuscate>
-              <fileset dir="${build.classes.dir}"/>
-          </obfuscate>
-      </target>
-
-  For list of available properties check the imported 
-  nbproject/build-impl.xml file. 
-
-
-  Another way to customize the build is by overriding existing main targets.
-  The targets of interest are: 
-
-    -init-macrodef-javac:     defines macro for javac compilation
-    -init-macrodef-junit:     defines macro for junit execution
-    -init-macrodef-debug:     defines macro for class debugging
-    -init-macrodef-java:      defines macro for class execution
-    -do-jar:                  JAR building
-    run:                      execution of project 
-    -javadoc-build:           Javadoc generation
-    test-report:              JUnit report generation
-
-  An example of overriding the target for project execution could look like this:
-
-      <target name="run" depends="BattleShip-impl.jar">
-          <exec dir="bin" executable="launcher.exe">
-              <arg file="${dist.jar}"/>
-          </exec>
-      </target>
-
-  Notice that the overridden target depends on the jar target and not only on 
-  the compile target as the regular run target does. Again, for a list of available 
-  properties which you can use, check the target you are overriding in the
-  nbproject/build-impl.xml file. 
-
-  -->
-    
-  <target name="-check-actions" depends="init">
-    <fileset dir="${build.classes.dir}" includes="**/*Action.class" id="actionClasses"/>
-    <property location="${build.classes.dir}" name="build.classes.dir.resolved"/>
-    <property  name="actionServicesFile"
-               value="${build.classes.dir}/META-INF/services/de.nigjo.battleship.ui.ActionBase"/>
-    <uptodate targetfile="${actionServicesFile}" property="uptodateActions">
-      <srcfiles refid="actionClasses"/>
-    </uptodate>
+<project name="Battleship-root" default="build" basedir=".">
+  <target name="-root-init" depends="download-libraries">
+    <path id="jars" >
+      <fileset dir="dist" includes="**/*.jar" erroronmissingdir="false"/>
+    </path>
+    <presetdef name="subbuild">
+      <ant inheritall="false" inheritrefs="false">
+        <property name="dist.dir" location="dist"/>
+        <property name="do.depend" location="false"/>
+        <property name="do.jar" location="true"/>
+        <property name="libsdone" value="true"/>
+        <property name="javac.classpath" location="${toString:jars}"/>
+      </ant>
+    </presetdef>
   </target>
-  <target name="-post-compile" depends="-check-actions" unless="uptodateActions">
-    <echo level="info">updating services</echo>
-    <pathconvert pathsep="${line.separator}" dirsep="." property="actionFQNs">
-      <fileset refid="actionClasses"/>
-      <chainedmapper>
-        <globmapper from="${build.classes.dir.resolved}${file.separator}*" to="*"/>
-        <globmapper from="*.class" to="*"/>
-      </chainedmapper>
+
+  <target name="clean" depends="-root-init">
+    <subbuild dir="ui" target="clean"/>
+    <subbuild dir="core" target="clean"/>
+  </target>
+
+  <target name="build" depends="-root-init">
+    <mkdir dir="dist"/>
+    <subbuild dir="core">
+      <target name="test"/>
+      <target name="jar"/>
+      <target name="javadoc"/>
+    </subbuild>
+    <subbuild dir="ui">
+      <target name="test"/>
+      <target name="jar"/>
+      <target name="javadoc"/>
+    </subbuild>
+
+    <pathconvert property="winClasspath" pathsep=";" dirsep="\">
+      <path refid="jars"/>
+      <globmapper from="${basedir}${file.separator}dist${file.separator}*" to="%~dp0*"/>
     </pathconvert>
-    <echo file="${actionServicesFile}"
-          message="${actionFQNs}"/>
+
+    <echo file="dist/BattleShip.cmd"><![CDATA[@echo off
+setlocal
+set "BATTLESHIP_cp=${winClasspath}"
+if not defined JAVA_HOME (
+  for /F "delims=*" %%J in ('where javaw.exe') do (
+    if exist "%%~dpJ..\bin\javaw.exe" set "JAVA_HOME=%%~dpJ.."
+  )
+)
+"%JAVA_HOME%\bin\java.exe" -cp "%BATTLESHIP_cp%" de.nigjo.battleship.Launcher %*
+]]></echo>
   </target>
-  
-  <target name="-post-jar">
-    <java jar="${dist.jar}" fork="true" logerror="true">
-      <sysproperty key="file.encoding" value="UTF-8"/>
-      <sysproperty key="java.awt.headless" value="true"/>
-      <arg value="--help"/>
-    </java>
+
+  <target name="create-release" depends="clean,build"
+          description="clean and build all"/>
+
+  <target name="-init-download" unless="${libsdone}">
+    <property name="baseurl" value="https://repo1.maven.org/maven2"/>
+
+    <macrodef name="download">
+      <attribute name="group"/>
+      <attribute name="artifact"/>
+      <attribute name="version"/>
+      <sequential>
+        <local name="slashed"/>
+        <loadresource property="slashed">
+          <string>@{group}</string>
+          <filterchain>
+            <tokenfilter delimoutput="/">
+              <stringtokenizer delims="."/>
+            </tokenfilter>
+          </filterchain>
+        </loadresource>
+        <!--https://search.maven.org/remotecontent?filepath=org/junit/jupiter/junit-jupiter-api/5.10.1/junit-jupiter-api-5.10.1.jar-->
+        <!--https://repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.10.1/junit-jupiter-api-5.10.1.jar-->
+        <mkdir dir="lib/@{group}"/>
+        <get src="${baseurl}/${slashed}/@{artifact}/@{version}/@{artifact}-@{version}.jar"
+             dest="lib/@{group}/@{artifact}-@{version}.jar" skipexisting="true"/>
+      </sequential>
+    </macrodef>
+
+    <macrodef name="library">
+      <attribute name="name"/>
+      <attribute name="displayName"/>
+      <attribute name="version"/>
+      <attribute name="jarbase" default="@{name}"/>
+      <element name="downloads"/>
+      <sequential>
+        <property name="@{name}.version" value="@{version}"/>
+        <downloads/>
+        <property name="libs.@{name}.displayName" value="@{displayName} ${@{name}.version}"/>
+        <pathconvert property="libs.@{name}.classpath">
+          <fileset dir="lib" includes="**/@{jarbase}-*@{version}.jar"/>
+          <globmapper from="${basedir}*" to="..*"/>
+        </pathconvert>
+      </sequential>
+    </macrodef>
+
+    <uptodate targetfile="lib/nblibraries.properties" srcfile="${ant.file.Battleship-root}"
+              property="libsdone"/>
+
+  </target>
+  <target name="download-libraries" depends="-init-download" unless="${libsdone}">
+    <property name="libsdone" value="true"/>
+
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <library name="apiguardian" version="1.1.2"
+             displayName="API Guardian">
+      <downloads>
+        <download artifact="apiguardian-api" group="org.apiguardian" version="${apiguardian.version}"/>
+      </downloads>
+    </library>
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <library name="opentest4j" version="1.3.0"
+             displayName="Open Test Alliance for the JVM">
+      <downloads>
+        <download artifact="opentest4j" group="org.opentest4j" version="${opentest4j.version}"/>
+      </downloads>
+    </library>
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <library name="junit_5" version="5.10.1"
+             displayName="JUnit" jarbase="junit-jupiter">
+      <downloads>
+        <download artifact="junit-jupiter-api" group="org.junit.jupiter" version="${junit_5.version}"/>
+        <download artifact="junit-jupiter-params" group="org.junit.jupiter" version="${junit_5.version}"/>
+        <download artifact="junit-jupiter-engine" group="org.junit.jupiter" version="${junit_5.version}"/>
+      </downloads>
+    </library>
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <library name="junit_platform" version="1.10.1"
+             displayName="JUnit Platfrom" jarbase="junit-platform">
+      <downloads>
+        <download artifact="junit-platform-console" group="org.junit.platform" version="${junit_platform.version}"/>
+        <download artifact="junit-platform-reporting" group="org.junit.platform" version="${junit_platform.version}"/>
+        <download artifact="junit-platform-launcher" group="org.junit.platform" version="${junit_platform.version}"/>
+        <download artifact="junit-platform-engine" group="org.junit.platform" version="${junit_platform.version}"/>
+        <download artifact="junit-platform-commons" group="org.junit.platform" version="${junit_platform.version}"/>
+      </downloads>
+    </library>
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+    <!--store all libs-->
+    <echoproperties destfile="lib/nblibraries.properties">
+      <propertyset>
+        <propertyref prefix="libs."/>
+      </propertyset>
+    </echoproperties>
   </target>
 </project>

@@ -1,6 +1,7 @@
-nbproject/private/
-nbproject/configs/
-build/
-dist/
+**/nbproject/private/
+**/nbproject/configs/
+**/build/
+**/dist/
 /battleship.player.id
 /battleship-debug.log
+/lib
