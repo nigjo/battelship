@@ -2,6 +2,6 @@
 **/nbproject/configs/
 **/build/
 **/dist/
-/battleship.player.id
+battleship.player.id
 /battleship-debug.log
 /lib
