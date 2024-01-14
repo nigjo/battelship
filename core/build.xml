@@ -77,29 +77,29 @@
 
   <target name="-do-test-run">
     <!-- Run JUnit5 -->
-    <mkdir dir="${basedir}/build/test/work"/>
-    <echo>CP:${run.test.classpath}</echo>
-    <java dir="${basedir}/build/test/work"  failonerror="false" fork="true"
+    <mkdir dir="${build.test.work.dir}"/>
+    <java dir="${build.test.work.dir}"  failonerror="false" fork="true"
           resultproperty="junitrc" classpath="${run.test.classpath}"
           classname="org.junit.platform.console.ConsoleLauncher">
+      <arg value="--disable-banner"/>
       <arg value="--scan-classpath"/>
       <arg line="--reports-dir"/>
-      <arg file="build/test/results"/>
+      <arg file="${build.test.results.dir}"/>
     </java>
-    <echo>RC:${junitrc}</echo>
+    <echo level="info">RC:${junitrc}</echo>
     <condition property="tests.failed">
       <not>
         <equals arg1="0" arg2="${junitrc}"/>
       </not>
     </condition>
-    <echo>failed:${tests.failed}</echo>
+    <!--<echo>failed:${tests.failed}</echo>-->
   </target>
   <target name="test-report">
-    <junitreport todir="build/test/results">
-      <fileset dir="build/test/results">
+    <junitreport todir="${build.test.results.dir}">
+      <fileset dir="${build.test.results.dir}">
         <include name="TEST-*.xml"/>
       </fileset>
-      <report format="frames" todir="build/test/results/html"/>
+      <report format="frames" todir="${build.test.results.dir}/html"/>
     </junitreport>
   </target>
 
