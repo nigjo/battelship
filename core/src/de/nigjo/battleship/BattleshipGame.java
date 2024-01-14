@@ -24,7 +24,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -45,13 +47,12 @@ import de.nigjo.battleship.util.Storage;
  */
 public final class BattleshipGame
 {
-  private final Storage gamedata;
-  private final Consumer<Runnable> stateChangeRunner;
   public static final String KEY_PLAYER = "BattleshipGame.activePlayer";
   public static final String PLAYER_SELF = "self";
   public static final String PLAYER_OPPONENT = "opponent";
   public static final String KEY_PLAYER_NUM = "BattleshipGame.player";
   public static final String KEY_STATE = "BattleshipGame.gamestate";
+
   public static final String STATE_PLACEMENT = "BattleshipGame.gamestate.placement";
   public static final String STATE_WAIT_START = "BattleshipGame.gamestate.waitForStart";
   public static final String STATE_ATTACK = "BattleshipGame.gamestate.doAttack";
@@ -61,6 +62,12 @@ public final class BattleshipGame
   public static final String STATE_WAIT_RESPONSE =
       "BattleshipGame.gamestate.waitForResult";
   public static final String STATE_FINISHED = "BattleshipGame.gamestate.endOfGame";
+
+  private static final String STATE_CHANGER_THREAD = "BattleshipGame.stateChanger";
+
+  private final Storage gamedata;
+  private final Consumer<Runnable> stateChangeRunner;
+  private final Supplier<Boolean> stateChangeChecker;
 
   public static final class Config
   {
@@ -86,7 +93,7 @@ public final class BattleshipGame
 
   public BattleshipGame(Path playerId)
   {
-    this(playerId, createExecutor());
+    this(playerId, createExecutor(), getThreadChecker());
   }
 
   private static Consumer<Runnable> createExecutor()
@@ -95,7 +102,7 @@ public final class BattleshipGame
     {
       var service = Executors.newSingleThreadExecutor((r) ->
       {
-        Thread t = new Thread(r);
+        Thread t = new Thread(r, STATE_CHANGER_THREAD);
         t.setDaemon(true);
         return t;
       });
@@ -107,7 +114,21 @@ public final class BattleshipGame
     }
   }
 
-  public BattleshipGame(Path playerId, Consumer<Runnable> stateChangeRunner)
+  private static Supplier<Boolean> getThreadChecker()
+  {
+    if(GraphicsEnvironment.isHeadless())
+    {
+      return () -> STATE_CHANGER_THREAD.equals(
+          Thread.currentThread().getName());
+    }
+    else
+    {
+      return SwingUtilities::isEventDispatchThread;
+    }
+  }
+
+  public BattleshipGame(Path playerId, Consumer<Runnable> stateChangeRunner,
+      Supplier<Boolean> isStateChangeThread)
   {
     this.gamedata = new Storage();
     gamedata.put(KeyManager.KEY_MANAGER_SELF, new KeyManager(playerId));
@@ -123,8 +144,11 @@ public final class BattleshipGame
     //just run-test the keymanager
     validateKeyManager();
 
+    //Bei diesem Status ist noch nichts festgelegt für das Spiel.
+    gamedata.put(KEY_STATE, "BattleshipGame.gamestate.init");
     gamedata.addPropertyChangeListener(KEY_STATE, new StateObserver(this));
 
+    this.stateChangeChecker = isStateChangeThread;
     this.stateChangeRunner = stateChangeRunner;
   }
 
@@ -234,6 +258,20 @@ public final class BattleshipGame
     }
   }
 
+  public void storeOwnBoard()
+  {
+    KeyManager km = getData(
+        KeyManager.KEY_MANAGER_SELF, KeyManager.class);
+
+    BoardData board = getData(BoardData.KEY_SELF, BoardData.class);
+    int self = getDataInt(KEY_PLAYER_NUM, -1);
+
+    String payload = km.encode(board.toString());
+    getData(Savegame.class)
+        .addRecord(Savegame.Record.BOARD, self, payload);
+    updateState(BattleshipGame.STATE_WAIT_START);
+  }
+
   private void validateKeyManager()
   {
     KeyManager km = gamedata.get(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
@@ -302,7 +340,8 @@ public final class BattleshipGame
     Logger.getLogger(BattleshipGame.class.getName())
         .log(Level.FINER, "updating next state from current game state");
     int selfId = getDataInt(KEY_PLAYER_NUM, 0);
-    Savegame.Record lastAction = getData(Savegame.class).getLastRecord();
+    Savegame savegame = getData(Savegame.class);
+    Savegame.Record lastAction = savegame.getLastRecord();
     if(Savegame.Record.ATTACK.equals(lastAction.getKind()))
     {
       if(selfId == lastAction.getPlayerid())
@@ -328,7 +367,7 @@ public final class BattleshipGame
         //Wir haben unser Ergebnis gesendet
 
         //TODO: Wie kann ich erkennen, dass wir dran sind?
-        String[] result = getData(Savegame.class)
+        String[] result = savegame
             .getAttack(lastAction,
                 getData(KeyManager.KEY_MANAGER_SELF, KeyManager.class));
         boolean lastAttackWasHit = Boolean.parseBoolean(result[2]);
@@ -351,6 +390,32 @@ public final class BattleshipGame
   public void updateState(String state)
   {
     stateChangeRunner.accept(() -> gamedata.put(BattleshipGame.KEY_STATE, state));
+  }
+
+  public String getState()
+  {
+    if(stateChangeChecker != null && Boolean.TRUE.equals(stateChangeChecker.get()))
+    {
+      //Deadlock sind doof. Innerhalb des "Change"-Threads direkt ausführen.
+      return gamedata.getString(KEY_STATE);
+    }
+
+    AtomicReference<String> state = new AtomicReference<>();
+    CountDownLatch l = new CountDownLatch(1);
+    stateChangeRunner.accept(() ->
+    {
+      state.set(gamedata.getString(KEY_STATE));
+      l.countDown();
+    });
+    try
+    {
+      l.await();
+      return state.get();
+    }
+    catch(InterruptedException ex)
+    {
+      throw new IllegalStateException(ex);
+    }
   }
 
 }
