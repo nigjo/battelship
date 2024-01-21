@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -340,7 +341,7 @@ public class Savegame
 
     private Record(String kind, int playerid, String payload)
     {
-      this.kind = kind;
+      this.kind = Objects.requireNonNull(kind);
       this.playerid = playerid;
       this.payload = payload;
     }
