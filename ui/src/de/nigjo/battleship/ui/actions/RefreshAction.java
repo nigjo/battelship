@@ -57,7 +57,7 @@ public class RefreshAction extends ActionBase
       try
       {
         StatusDisplayer.getDefault().setText("Lade Spielstanddatei neu ein.");
-        LoadGameAction.loadGame(savegame.getFilename());
+        game.reload();
       }
       catch(IOException ex)
       {

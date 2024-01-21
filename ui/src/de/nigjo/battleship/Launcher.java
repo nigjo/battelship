@@ -42,7 +42,6 @@ import de.nigjo.battleship.ui.DialogDisplayer;
 import de.nigjo.battleship.ui.GameBoard;
 import de.nigjo.battleship.ui.StatusLine;
 import de.nigjo.battleship.ui.SwingDisplayer;
-import de.nigjo.battleship.ui.actions.LoadGameAction;
 import de.nigjo.battleship.util.Storage;
 
 /**
@@ -115,7 +114,7 @@ public class Launcher
       {
         Logger.getLogger(Launcher.class.getName()).log(Level.FINEST,
             "savegame defined in command line");
-        SwingUtilities.invokeLater(Launcher::loadGamefile);
+        SwingUtilities.invokeLater(() -> Launcher.loadGamefile(game));
       }
       else
       {
@@ -127,14 +126,14 @@ public class Launcher
 
   }
 
-  private static void loadGamefile()
+  private static void loadGamefile(BattleshipGame game)
   {
     try
     {
       Path loadgame = Path.of(CliArg.NON_ARG_PARAM.getParam());
       Logger.getLogger(Launcher.class.getName())
           .log(Level.CONFIG, "loading {0}", loadgame.toAbsolutePath().normalize());
-      LoadGameAction.loadGame(loadgame);
+      game.loadSavegame(loadgame);
     }
     catch(RuntimeException ex)
     {

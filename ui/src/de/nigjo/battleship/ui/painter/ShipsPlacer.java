@@ -28,8 +28,6 @@ import javax.swing.UIManager;
 import de.nigjo.battleship.BattleshipGame;
 import de.nigjo.battleship.api.StatusDisplayer;
 import de.nigjo.battleship.data.BoardData;
-import de.nigjo.battleship.data.KeyManager;
-import de.nigjo.battleship.data.Savegame;
 import de.nigjo.battleship.ui.OceanBoard;
 import de.nigjo.battleship.util.Storage;
 
@@ -92,15 +90,7 @@ public class ShipsPlacer extends InteractivePainter
       if(currentShip >= ships.length)
       {
         setActive(false);
-        withGame(g ->
-        {
-          KeyManager km = g.getData(
-              KeyManager.KEY_MANAGER_SELF, KeyManager.class);
-          String payload = km.encode(board.toString());
-          g.getData(Savegame.class)
-              .addRecord(Savegame.Record.BOARD, getCurrentPlayer(), payload);
-          g.updateState(BattleshipGame.STATE_WAIT_START);
-        });
+        withGame(BattleshipGame::storeOwnBoard);
       }
 
       repaint();
