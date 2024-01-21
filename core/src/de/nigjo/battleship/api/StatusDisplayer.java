@@ -15,6 +15,9 @@
  */
 package de.nigjo.battleship.api;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import de.nigjo.battleship.util.Storage;
 
 /**
@@ -25,7 +28,9 @@ public interface StatusDisplayer
 {
   public static StatusDisplayer getDefault()
   {
-    return Storage.getDefault().get(StatusDisplayer.class);
+    return Storage.getDefault().find(StatusDisplayer.class)
+        .orElseGet(() -> s
+        -> Logger.getLogger(StatusDisplayer.class.getName()).log(Level.INFO, "{0}", s));
   }
 
   public void setText(String message);
