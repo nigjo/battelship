@@ -180,6 +180,11 @@ public final class BattleshipGame
     return gamedata.get(boardkey, valueType);
   }
 
+  public <T> void putData(Class<? super T> valueType, T value)
+  {
+    gamedata.put(valueType, value);
+  }
+
   public void putData(String key, Object value)
   {
     gamedata.put(key, value);

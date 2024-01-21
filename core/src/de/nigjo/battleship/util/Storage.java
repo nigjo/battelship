@@ -64,6 +64,11 @@ public class Storage
     }
   }
 
+  public <T> void put(Class<? super T> type, T value)
+  {
+    put(type.getName(), value);
+  }
+
   public String getString(String key)
   {
     return get(key, String.class);
