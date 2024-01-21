@@ -17,6 +17,7 @@ package de.nigjo.battleship;
 
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,6 +38,7 @@ import javax.swing.SwingUtilities;
 import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.KeyManager;
 import de.nigjo.battleship.data.Savegame;
+import de.nigjo.battleship.internal.SavegameLoader;
 import de.nigjo.battleship.internal.StateObserver;
 import de.nigjo.battleship.util.Storage;
 
@@ -255,6 +257,21 @@ public final class BattleshipGame
     {
       gamedata.put(BoardData.KEY_SELF, new BoardData(size));
     }
+  }
+
+  public void loadSavegame(Path gamefile) throws IOException
+  {
+    SavegameLoader.loadGame(this, gamefile);
+  }
+
+  public void reload() throws IOException
+  {
+    Savegame savegame = getData(Savegame.class);
+    if(savegame == null)
+    {
+      throw new NoSuchFileException("no savegame");
+    }
+    loadSavegame(savegame.getFilename());
   }
 
   public void storeOwnBoard()
