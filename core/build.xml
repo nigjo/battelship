@@ -75,12 +75,13 @@
     <ant dir=".." target="download-libraries"/>
   </target>
 
-  <target name="-do-test-run">
+  <target name="-do-test-run" depends="init,compile-test,-init-test-run-module-properties,-pre-test-run">
     <!-- Run JUnit5 -->
     <mkdir dir="${build.test.work.dir}"/>
     <java dir="${build.test.work.dir}"  failonerror="false" fork="true"
           resultproperty="junitrc" classpath="${run.test.classpath}"
           classname="org.junit.platform.console.ConsoleLauncher">
+      <sysproperty key="de.nigjo.battleship.level" value="ALL"/>
       <arg value="--disable-banner"/>
       <arg value="--scan-classpath"/>
       <arg line="--reports-dir"/>
