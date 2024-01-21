@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.nigjo.battleship;
+package de.nigjo.battleship.internal;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import de.nigjo.battleship.BattleshipGame;
 import static de.nigjo.battleship.BattleshipGame.*;
 import de.nigjo.battleship.api.StatusDisplayer;
 import de.nigjo.battleship.data.BoardData;
@@ -58,7 +59,7 @@ public class StateObserver implements PropertyChangeListener
         break;
       case STATE_PLACEMENT:
         //Es wird darauf gewartet dass die eigenen Schiffe platziert sind.
-        // Wird in ShipsPlacer behandelt.
+        //Der ShipsPlacer muss am Ende "BattleshipGame.storeOwnBoard()" aufrufen.
         game.putData(KEY_PLAYER, PLAYER_SELF);
         break;
       case STATE_WAIT_START:
@@ -94,7 +95,8 @@ public class StateObserver implements PropertyChangeListener
         break;
       case STATE_WAIT_ATTACK:
         //Warten auf einen Schuss
-        StatusDisplayer.getDefault().setText("Warte auf einen Schuß aus dem Gegenergebiet.");
+        StatusDisplayer.getDefault().setText(
+            "Warte auf einen Schuß aus dem Gegenergebiet.");
         game.putData(KEY_PLAYER, PLAYER_OPPONENT);
         break;
       case STATE_ATTACKED:
@@ -177,4 +179,86 @@ public class StateObserver implements PropertyChangeListener
       game.updateState(STATE_ATTACK);
     }
   }
+
+  public static void updateState(BattleshipGame game)
+  {
+    Logger.getLogger(BattleshipGame.class.getName())
+        .log(Level.FINER, "updating next state from current game state");
+    int selfId = game.getDataInt(KEY_PLAYER_NUM, 0);
+    Savegame savegame = game.getData(Savegame.class);
+    if(savegame == null)
+    {
+      Logger.getLogger(StateObserver.class.getName())
+          .log(Level.WARNING, "no savegame defined");
+      game.updateState("BattleshipGame.gamestate.init");
+      return;
+    }
+
+    Savegame.Record lastAction = savegame.getLastRecord();
+    switch(lastAction.getKind())
+    {
+      case Savegame.Record.ATTACK:
+        if(selfId == lastAction.getPlayerid())
+        {
+          // Es wurde auf uns geschossen. Treffer pruefen.
+          game.updateState(STATE_ATTACKED);
+        }
+        else
+        {
+          //Wir haben geschossen. Warten auf Antwort.
+          game.updateState(STATE_WAIT_RESPONSE);
+        }
+        break;
+      case Savegame.Record.RESULT:
+        if(selfId == lastAction.getPlayerid())
+        {
+          //Ergebnis unseres Schusses
+          game.updateState(STATE_RESPONSE);
+        }
+        else
+        {
+          //Wir haben unser Ergebnis gesendet
+
+          //TODO: Wie kann ich erkennen, dass wir dran sind?
+          String[] result = savegame
+              .getAttack(lastAction,
+                  game.getData(KeyManager.KEY_MANAGER_SELF, KeyManager.class));
+          boolean lastAttackWasHit = Boolean.parseBoolean(result[2]);
+          if(lastAttackWasHit)
+          {
+            game.updateState(STATE_WAIT_ATTACK);
+          }
+          else
+          {
+            game.updateState(STATE_ATTACK);
+          }
+        }
+        break;
+      case Savegame.Record.PLAYER:
+        if(selfId == lastAction.getPlayerid())
+        {
+          game.updateState(STATE_PLACEMENT);
+        }
+        else
+        {
+          game.updateState(STATE_WAIT_START);
+        }
+        break;
+      case Savegame.Record.BOARD:
+        // Player1 wartet auf Player2 oder Player 2 wartet auf den ersten Schuss.
+        game.updateState(STATE_WAIT_START);
+        break;
+      default:
+        Logger.getLogger(StateObserver.class.getName())
+            .log(Level.INFO, "unknown last record: {0}, player {1}",
+                new Object[]
+                {
+                  lastAction.getKind(),
+                  lastAction.getPlayerid()
+                });
+        game.updateState(STATE_WAIT_START);
+        break;
+    }
+  }
+
 }

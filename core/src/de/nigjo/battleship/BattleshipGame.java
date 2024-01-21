@@ -29,8 +29,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import java.awt.GraphicsEnvironment;
 
@@ -39,6 +37,7 @@ import javax.swing.SwingUtilities;
 import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.KeyManager;
 import de.nigjo.battleship.data.Savegame;
+import de.nigjo.battleship.internal.StateObserver;
 import de.nigjo.battleship.util.Storage;
 
 /**
@@ -337,54 +336,7 @@ public final class BattleshipGame
 
   public void updateState()
   {
-    Logger.getLogger(BattleshipGame.class.getName())
-        .log(Level.FINER, "updating next state from current game state");
-    int selfId = getDataInt(KEY_PLAYER_NUM, 0);
-    Savegame savegame = getData(Savegame.class);
-    Savegame.Record lastAction = savegame.getLastRecord();
-    if(Savegame.Record.ATTACK.equals(lastAction.getKind()))
-    {
-      if(selfId == lastAction.getPlayerid())
-      {
-        // Es wurde auf uns geschossen. Treffer pruefen.
-        updateState(STATE_ATTACKED);
-      }
-      else
-      {
-        //Wir haben geschossen. Warten auf Antwort.
-        updateState(STATE_WAIT_RESPONSE);
-      }
-    }
-    else if(Savegame.Record.RESULT.equals(lastAction.getKind()))
-    {
-      if(selfId == lastAction.getPlayerid())
-      {
-        //Ergebnis unseres Schusses
-        updateState(STATE_RESPONSE);
-      }
-      else
-      {
-        //Wir haben unser Ergebnis gesendet
-
-        //TODO: Wie kann ich erkennen, dass wir dran sind?
-        String[] result = savegame
-            .getAttack(lastAction,
-                getData(KeyManager.KEY_MANAGER_SELF, KeyManager.class));
-        boolean lastAttackWasHit = Boolean.parseBoolean(result[2]);
-        if(lastAttackWasHit)
-        {
-          updateState(STATE_WAIT_ATTACK);
-        }
-        else
-        {
-          updateState(STATE_ATTACK);
-        }
-      }
-    }
-    else
-    {
-      updateState(STATE_WAIT_START);
-    }
+    StateObserver.updateState(this);
   }
 
   public void updateState(String state)
