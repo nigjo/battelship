@@ -28,6 +28,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
 import de.nigjo.battleship.BattleshipGame;
+import de.nigjo.battleship.io.LocalFileManager;
 import de.nigjo.battleship.ui.ActionBase;
 import de.nigjo.battleship.ui.ActionsManager;
 import de.nigjo.battleship.ui.DialogDisplayer;
@@ -79,12 +80,12 @@ public class NewGameAction extends ActionBase
                 "Die Spielstanddatei existiert bereit. Soll die Datei überschrieben werden?");
         if(JOptionPane.YES_OPTION == answer)
         {
-          game.createNewGame(savegameFile.toPath());
+          game.createNewGame(new LocalFileManager(savegameFile.toPath()));
         }
       }
       else
       {
-        game.createNewGame(savegameFile.toPath());
+        game.createNewGame(new LocalFileManager(savegameFile.toPath()));
       }
     }
   }

@@ -38,6 +38,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import de.nigjo.battleship.api.StatusDisplayer;
+import de.nigjo.battleship.io.LocalFileManager;
 import de.nigjo.battleship.ui.DialogDisplayer;
 import de.nigjo.battleship.ui.GameBoard;
 import de.nigjo.battleship.ui.StatusLine;
@@ -133,7 +134,7 @@ public class Launcher
       Path loadgame = Path.of(CliArg.NON_ARG_PARAM.getParam());
       Logger.getLogger(Launcher.class.getName())
           .log(Level.CONFIG, "loading {0}", loadgame.toAbsolutePath().normalize());
-      game.loadSavegame(loadgame);
+      game.loadSavegame(new LocalFileManager(loadgame));
     }
     catch(RuntimeException ex)
     {

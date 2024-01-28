@@ -48,7 +48,7 @@ public class RefreshAction extends ActionBase
   {
     BattleshipGame game = Storage.getDefault().get(BattleshipGame.class);
     Savegame savegame = game.getData(Savegame.class);
-    if(savegame == null || savegame.getFilename() == null)
+    if(savegame == null || savegame.getStorage() == null)
     {
       StatusDisplayer.getDefault().setText("Keinen Spielstand gefunden.");
     }

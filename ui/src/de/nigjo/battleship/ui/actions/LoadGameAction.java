@@ -25,6 +25,7 @@ import javax.swing.JFileChooser;
 
 import de.nigjo.battleship.BattleshipGame;
 import de.nigjo.battleship.api.StatusDisplayer;
+import de.nigjo.battleship.io.LocalFileManager;
 import de.nigjo.battleship.ui.ActionBase;
 import de.nigjo.battleship.util.Bundle;
 import de.nigjo.battleship.util.Storage;
@@ -49,7 +50,7 @@ public class LoadGameAction extends ActionBase
             Storage.getDefault().find(BattleshipGame.class)
                 .orElseThrow();
 
-        game.loadSavegame(chooser.getSelectedFile().toPath());
+        game.loadSavegame(new LocalFileManager(chooser.getSelectedFile().toPath()));
       }
       catch(IOException ex)
       {
