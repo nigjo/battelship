@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.nigjo.battleship.data;
+package de.nigjo.battleship.io.internal;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import de.nigjo.battleship.data.Savegame.Record;
+import de.nigjo.battleship.io.LocalFileManager;
 
 /**
  *
@@ -39,22 +40,23 @@ public class BackupManager
     BackupManager.active = active;
   }
 
-  static void backup(Savegame savegame) throws IOException
+  public static void backup(LocalFileManager manager, String lastLine) throws IOException
   {
     if(active)
     {
-      Path filename = savegame.getFilename();
+      Path savegame = manager.getSaveGameFile();
+      Path filename = savegame.getFileName();
       String basefile = filename.getFileName().toString();
       Path archive = filename.resolveSibling(basefile + ".zip");
 
-      addToExisting(archive, savegame);
+      addToExisting(archive, savegame, lastLine);
     }
   }
 
-  private static void addToExisting(Path archive, Savegame savegame)
+  private static void addToExisting(Path archive, Path savegame, String lastLine)
       throws IOException
   {
-    String basefile = savegame.getFilename().getFileName().toString();
+    String basefile = savegame.getFileName().toString();
     String basename = basefile.substring(0, basefile.lastIndexOf('.'));
     String ext = basefile.substring(basefile.lastIndexOf('.'));
 
@@ -80,23 +82,24 @@ public class BackupManager
           maxnum = localMax;
         }
       }
-      var recs = savegame.records();
-      Savegame.Record lastRec = recs.get(recs.size() - 1);
-
+      //var recs = savegame.allRecords();
+      //Savegame.Record lastRec = Savegame.recs.get(recs.size() - 1);
+      Record lastRec = Record.parseLine(lastLine);
       String backupname = basename
           + "-" + String.format("%04d", maxnum + 1)
           + "-player" + lastRec.getPlayerid()
           + "-" + lastRec.getKind()
           + ext;
       Path copy = zipfs.getPath("/", backupname);
-      try(BufferedWriter out = Files.newBufferedWriter(copy, StandardCharsets.UTF_8))
-      {
-        for(Savegame.Record record : recs)
-        {
-          out.write(record.toString());
-          out.newLine();
-        }
-      }
+      Files.copy(savegame, copy);
+//      try(BufferedWriter out = Files.newBufferedWriter(copy, StandardCharsets.UTF_8))
+//      {
+//        for(Savegame.Record record : recs)
+//        {
+//          out.write(record.toString());
+//          out.newLine();
+//        }
+//      }
     }
   }
 

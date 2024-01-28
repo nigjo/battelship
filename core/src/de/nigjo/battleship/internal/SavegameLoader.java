@@ -16,12 +16,11 @@
 package de.nigjo.battleship.internal;
 
 import java.io.IOException;
-import java.nio.file.Path;
+import java.io.UncheckedIOException;
 import java.util.NoSuchElementException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import de.nigjo.battleship.BattleshipGame;
+import de.nigjo.battleship.api.SavegameStorage;
 import de.nigjo.battleship.api.StatusDisplayer;
 import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.GamePlayback;
@@ -34,13 +33,18 @@ import de.nigjo.battleship.data.Savegame;
  */
 public class SavegameLoader
 {
-  public static void loadGame(BattleshipGame game, Path saveGameFile) throws IOException
+  public static void loadGame(BattleshipGame game, SavegameStorage supplier) throws IOException
   {
-    Logger.getLogger(SavegameLoader.class.getName())
-        .log(Level.INFO, "loading game from {0}", saveGameFile.toAbsolutePath());
-
-    Savegame savegame = Savegame.readFromFile(saveGameFile);
-    game.putData(Savegame.class.getName(), savegame);
+    Savegame savegame;
+    try
+    {
+      savegame = Savegame.createFromStorage(supplier);
+      game.putData(Savegame.class.getName(), savegame);
+    }
+    catch(UncheckedIOException ex)
+    {
+      throw ex.getCause();
+    }
 
     String player1key =
         savegame.records(1, Savegame.Record.PLAYER)
@@ -173,6 +177,5 @@ public class SavegameLoader
     game.putData(BattleshipGame.KEY_PLAYER_NUM, player);
     return true;
   }
-
 
 }

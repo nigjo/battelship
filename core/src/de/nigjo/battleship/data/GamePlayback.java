@@ -110,7 +110,7 @@ public class GamePlayback
       throw new IllegalArgumentException("missing player id");
     }
 
-    List<Savegame.Record> records = savegame.records();
+    List<Savegame.Record> records = savegame.allRecords();
     Savegame.Record first = records.get(0);
     if(!Savegame.Record.VERSION.equals(first.getKind()))
     {

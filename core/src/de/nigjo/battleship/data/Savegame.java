@@ -15,12 +15,10 @@
  */
 package de.nigjo.battleship.data;
 
-import java.io.*;
-import java.nio.channels.FileLock;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
@@ -28,6 +26,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import de.nigjo.battleship.BattleshipGame;
+import de.nigjo.battleship.api.SavegameStorage;
 import de.nigjo.battleship.util.Storage;
 
 /**
@@ -39,7 +38,8 @@ public class Savegame
   private static final String CURRENT_VERSION = "0";
 
   private final List<Record> records;
-  private Path filename;
+//  private Path filename;
+  private SavegameStorage ioStorage;
 
   private Savegame()
   {
@@ -76,22 +76,15 @@ public class Savegame
 
   private void store() throws UncheckedIOException
   {
-    if(filename != null)
+    if(ioStorage != null)
     {
-      try
-      {
-        storeToFile(filename);
-      }
-      catch(IOException ex)
-      {
-        throw new UncheckedIOException(ex);
-      }
+      store(ioStorage);
     }
   }
 
-  public Path getFilename()
+  public SavegameStorage getStorage()
   {
-    return filename;
+    return ioStorage;
   }
 
   public Stream<Record> records(int player, String kind)
@@ -101,7 +94,7 @@ public class Savegame
         .filter(r -> kind.equals(r.getKind()));
   }
 
-  List<Record> records()
+  public List<Record> allRecords()
   {
     return Collections.unmodifiableList(new ArrayList<>(records));
   }
@@ -133,98 +126,56 @@ public class Savegame
         .map(p -> p.substring(p.indexOf('=') + 1));
   }
 
-  public static Savegame readFromFile(Path savegameFile) throws IOException
+  public static Savegame createFromStorage(SavegameStorage storage)
   {
-    var fis = new FileInputStream(savegameFile.toFile());
-    try(BufferedReader in = new BufferedReader(
-        new InputStreamReader(fis, StandardCharsets.UTF_8)))
+    Savegame savedgame = new Savegame();
+    String comment = null;
+    Iterator<String> lines = storage.getLines().iterator();
+    while(lines.hasNext())
     {
-      Savegame savedgame = new Savegame();
-      String zeile;
-      String comment = null;
-      while(null != (zeile = in.readLine()))
+      String zeile = lines.next();
+      if(zeile.isBlank())
       {
-        if(zeile.isBlank())
+        continue;
+      }
+      if(zeile.startsWith(";"))
+      {
+        if(comment == null)
         {
-          continue;
-        }
-        if(zeile.startsWith(";"))
-        {
-          if(comment == null)
-          {
-            comment = zeile.substring(1);
-          }
-          else
-          {
-            comment += "\n" + zeile.substring(1);
-          }
+          comment = zeile.substring(1);
         }
         else
         {
-          Savegame.Record record = parseLine(zeile);
-          if(record != null)
-          {
-            savedgame.addRecord(record);
-          }
+          comment += "\n" + zeile.substring(1);
         }
       }
-
-      savedgame.setFilename(savegameFile);
-
-      return savedgame;
-    }
-    catch(UncheckedIOException uioe)
-    {
-      throw uioe.getCause();
-    }
-  }
-
-  private static Savegame.Record parseLine(String storedLine)
-  {
-    if(storedLine.startsWith(";") || !Character.isUpperCase(storedLine.charAt(0)))
-    {
-      return null;
-    }
-
-    if(storedLine.matches("^[A-Z]+:\\d,.*"))
-    {
-      String command = storedLine.substring(0, storedLine.indexOf(':'));
-      String player =
-          storedLine.substring(storedLine.indexOf(':') + 1, storedLine.indexOf(','));
-      String payload = storedLine.substring(storedLine.indexOf(',') + 1);
-      return new Savegame.Record(command, Integer.parseInt(player), payload);
-    }
-    return null;
-  }
-
-  public void storeToFile(Path savegameFile) throws IOException
-  {
-    var fos = new FileOutputStream(savegameFile.toFile());
-    FileLock lock = fos.getChannel().lock();
-    try(BufferedWriter out = new BufferedWriter(
-        new OutputStreamWriter(fos, StandardCharsets.UTF_8)))
-    {
-      for(Record record : this.records)
+      else
       {
-        out.write(record.toString());
-        out.newLine();
-      }
-      setFilename(savegameFile);
-
-      BackupManager.backup(this);
-    }
-    finally
-    {
-      if(lock.isValid())
-      {
-        lock.release();
+        Record record = Record.parseLine(zeile);
+        if(record != null)
+        {
+          savedgame.addRecord(record);
+        }
       }
     }
+
+    savedgame.setIoStorage(storage);
+
+    storage.doneRead();
+    return savedgame;
   }
 
-  private void setFilename(Path savegameFile)
+  public void store(SavegameStorage storage)
   {
-    this.filename = savegameFile;
+    storage.storeLines(
+        this.records.stream()
+            .map(Record::toString));
+    setIoStorage(storage);
+  }
+
+  private void setIoStorage(SavegameStorage storage)
+  {
+    this.ioStorage = storage;
   }
 
   public Record getLastRecord()
@@ -245,7 +196,8 @@ public class Savegame
     if(Record.ATTACK.equals(reference.kind))
     {
       String encoded = reference.getPayload();
-      try{
+      try
+      {
         String decoded = self.decode(encoded);
         String[] posOnly = decoded.split(",");
         BoardData ownBoard =
@@ -260,7 +212,9 @@ public class Savegame
         };
         return result;
 
-      }catch(IllegalArgumentException ex){
+      }
+      catch(IllegalArgumentException ex)
+      {
         //keine dekodierung
         int idx = records.indexOf(reference);
         ListIterator<Record> it = records.listIterator(idx);
@@ -365,6 +319,24 @@ public class Savegame
     public String toString()
     {
       return kind + ":" + playerid + "," + String.join("\\n", payload);
+    }
+
+    public static Record parseLine(String storedLine)
+    {
+      if(storedLine.startsWith(";") || !Character.isUpperCase(storedLine.charAt(0)))
+      {
+        return null;
+      }
+
+      if(storedLine.matches("^[A-Z]+:\\d,.*"))
+      {
+        String command = storedLine.substring(0, storedLine.indexOf(':'));
+        String player =
+            storedLine.substring(storedLine.indexOf(':') + 1, storedLine.indexOf(','));
+        String payload = storedLine.substring(storedLine.indexOf(',') + 1);
+        return new Savegame.Record(command, Integer.parseInt(player), payload);
+      }
+      return null;
     }
 
   }

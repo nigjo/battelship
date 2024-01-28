@@ -34,6 +34,7 @@ import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.TestMethodOrder;
 
 import de.nigjo.battleship.data.BoardData;
+import de.nigjo.battleship.io.LocalFileManager;
 
 /**
  * Integration Test für ein vollständiges Spiel
@@ -77,7 +78,7 @@ public class FullGameTest
           validateState(player1Ref.get(), initState);
         }),
         DynamicTest.dynamicTest("createGame",
-            () -> createGame(player1Ref.get())),
+            () -> createFilebasedGame(player1Ref.get())),
         DynamicTest.dynamicTest("createGame-state",
             () -> validateState(player1Ref.get(), BattleshipGame.STATE_PLACEMENT)),
         DynamicTest.dynamicTest("initPlayer1",
@@ -146,10 +147,10 @@ public class FullGameTest
     assertEquals(expected, state);
   }
 
-  private void createGame(BattleshipGame player1) throws IOException
+  private void createFilebasedGame(BattleshipGame player1) throws IOException
   {
     System.err.println("- createGame()");
-    player1.createNewGame(gamefile);
+    player1.createNewGame(new LocalFileManager(gamefile));
 
     Assertions.assertEquals(4,
         Files.readAllLines(gamefile, StandardCharsets.UTF_8).size());
@@ -176,6 +177,6 @@ public class FullGameTest
     assertEquals(expectedLines,
         Files.readAllLines(gamefile, StandardCharsets.UTF_8).size());
 
-    player.loadSavegame(gamefile);
+    player.loadSavegame(new LocalFileManager(gamefile));
   }
 }

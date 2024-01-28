@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Assertions;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import de.nigjo.battleship.api.SavegameStorage;
 import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.KeyManager;
 
@@ -200,7 +202,7 @@ public class BattleshipGameTest
     System.out.println("createNewGame");
     Path savegameFile = null;
     BattleshipGame instance = null;
-    instance.createNewGame(savegameFile);
+    instance.createNewGame(new EmptyStorage());
     // TODO review the generated test code and remove the default call to fail.
     fail("The test case is a prototype.");
   }
@@ -224,6 +226,24 @@ public class BattleshipGameTest
     instance.updateState(state);
     // TODO review the generated test code and remove the default call to fail.
     fail("The test case is a prototype.");
+  }
+
+  private static class EmptyStorage implements SavegameStorage
+  {
+    public EmptyStorage()
+    {
+    }
+
+    @Override
+    public Stream<String> getLines()
+    {
+      return Stream.empty();
+    }
+
+    @Override
+    public void storeLines(Stream<String> map)
+    {
+    }
   }
 
 }

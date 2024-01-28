@@ -35,6 +35,7 @@ import java.awt.GraphicsEnvironment;
 
 import javax.swing.SwingUtilities;
 
+import de.nigjo.battleship.api.SavegameStorage;
 import de.nigjo.battleship.data.BoardData;
 import de.nigjo.battleship.data.KeyManager;
 import de.nigjo.battleship.data.Savegame;
@@ -264,9 +265,9 @@ public final class BattleshipGame
     }
   }
 
-  public void loadSavegame(Path gamefile) throws IOException
+  public void loadSavegame(SavegameStorage supplier) throws IOException
   {
-    SavegameLoader.loadGame(this, gamefile);
+    SavegameLoader.loadGame(this, supplier);
   }
 
   public void reload() throws IOException
@@ -276,7 +277,7 @@ public final class BattleshipGame
     {
       throw new NoSuchFileException("no savegame");
     }
-    loadSavegame(savegame.getFilename());
+    loadSavegame(savegame.getStorage());
   }
 
   public void storeOwnBoard()
@@ -335,7 +336,7 @@ public final class BattleshipGame
     gamedata.put(BoardData.KEY_OPPONENT, opponent);
   }
 
-  public void createNewGame(Path savegameFile) throws IOException
+  public void createNewGame(SavegameStorage storage) throws IOException
   {
     Savegame savegame = Savegame.createNew();
 
@@ -347,7 +348,7 @@ public final class BattleshipGame
     KeyManager km = this.getData(KeyManager.KEY_MANAGER_SELF, KeyManager.class);
     savegame.addRecord(Savegame.Record.PLAYER, 1, km.getPublicKey());
 
-    savegame.storeToFile(savegameFile);
+    savegame.store(storage);
     this.putData(Savegame.class.getName(), savegame);
 
     this.clearBoards();

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.nigjo.battleship.data;
+package de.nigjo.battleship.io.internal;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -29,6 +29,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import de.nigjo.battleship.data.Savegame;
 
 /**
  *
@@ -95,18 +97,18 @@ public class SavegameManager implements Closeable
   public void readSavegame()
   {
     checking = true;
-    try
-    {
-      Savegame savedGame = Savegame.readFromFile(saveGameFile);
-    }
-    catch(IOException ex)
-    {
-      Logger.getLogger(SavegameManager.class.getName()).log(Level.SEVERE, null, ex);
-    }
-    finally
-    {
+//    try
+//    {
+//      Savegame savedGame = Savegame.readFromFile(saveGameFile);
+//    }
+//    catch(IOException ex)
+//    {
+//      Logger.getLogger(SavegameManager.class.getName()).log(Level.SEVERE, null, ex);
+//    }
+//    finally
+//    {
       checking = false;
-    }
+//    }
   }
 
   @Override
